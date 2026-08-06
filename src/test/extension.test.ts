@@ -27,8 +27,21 @@ suite("Extension Integration Tests", () => {
     }
   });
 
-  test("esaFileSystemProviderが登録される", () => {
+  test("esaFileSystemProviderが登録される", async () => {
+    // Verify the FileSystemProvider is registered by attempting to stat an esa: URI.
+    // If no provider were registered, VS Code would throw "no filesystem provider" error.
     const uri = vscode.Uri.parse("esa://test-team/posts/1.md");
-    assert.strictEqual(uri.scheme, "esa");
+    try {
+      await vscode.workspace.fs.stat(uri);
+      // stat may succeed (if somehow cached) or throw FileNotFound — both mean the provider is registered
+    } catch (err: unknown) {
+      // FileNotFound / NoPermissions means the provider handled the request — it IS registered
+      // Only fail if we get a "no filesystem provider" error
+      const msg = err instanceof Error ? err.message : String(err);
+      assert.ok(
+        !msg.includes("no filesystem provider"),
+        `FileSystemProvider が登録されていません: ${msg}`,
+      );
+    }
   });
 });

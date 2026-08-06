@@ -43,7 +43,7 @@ export class CredentialService implements vscode.Disposable {
       validateInput: (v) => {
         const trimmed = v.trim();
         if (trimmed.length === 0) {
-          return null;
+          return "チーム名を入力してください。";
         }
         if (!/^[A-Za-z0-9][A-Za-z0-9-]*$/.test(trimmed)) {
           return "チーム名部分だけを入力してください（例: my-team）。URL全体やドメインは入力しないでください。";

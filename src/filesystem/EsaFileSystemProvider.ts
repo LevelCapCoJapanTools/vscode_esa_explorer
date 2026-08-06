@@ -51,11 +51,12 @@ export class EsaFileSystemProvider implements vscode.FileSystemProvider, vscode.
     const { teamName, postNumber } = parseEsaUri(uri);
     const cached = this.cache.get(teamName, postNumber);
     const now = Date.now();
+    const ctime = cached ? new Date(cached.post.created_at).getTime() : now;
     const mtime = cached ? cached.fetchedAt.getTime() : now;
     const size = cached ? Buffer.byteLength(cached.post.body_md, "utf8") : 0;
     return {
       type: vscode.FileType.File,
-      ctime: now,
+      ctime,
       mtime,
       size,
     };
@@ -94,6 +95,10 @@ export class EsaFileSystemProvider implements vscode.FileSystemProvider, vscode.
   ): Promise<void> {
     if (options.create) {
       throw vscode.FileSystemError.NoPermissions("記事の新規作成はサポートされていません。");
+    }
+    const { teamName: checkTeam, postNumber: checkPost } = parseEsaUri(uri);
+    if (!options.overwrite && this.cache.get(checkTeam, checkPost)) {
+      throw vscode.FileSystemError.FileExists(uri);
     }
 
     const uriKey = uri.toString();
