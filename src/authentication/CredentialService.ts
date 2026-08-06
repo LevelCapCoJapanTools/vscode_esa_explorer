@@ -42,8 +42,11 @@ export class CredentialService implements vscode.Disposable {
       ignoreFocusOut: true,
       validateInput: (v) => {
         const trimmed = v.trim();
-        if (trimmed.includes("esa.io") || trimmed.startsWith("http")) {
-          return "チーム名部分だけを入力してください（例: my-team）。URL全体は入力しないでください。";
+        if (trimmed.length === 0) {
+          return null;
+        }
+        if (!/^[A-Za-z0-9][A-Za-z0-9-]*$/.test(trimmed)) {
+          return "チーム名部分だけを入力してください（例: my-team）。URL全体やドメインは入力しないでください。";
         }
         return null;
       },
