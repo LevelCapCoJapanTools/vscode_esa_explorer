@@ -42,3 +42,12 @@ VS Code で「Run Extension」構成を起動すると、拡張機能開発ホ�
 ## テスト
 
 テストは `@vscode/test-cli`（`.vscode-test.mjs`）で `out/test/**/*.test.js` を実行します。Linux環境では `xvfb-run -a npm test` を使用してください。
+
+## 検証結果
+
+2026-08-07に以下を実行しました。
+
+| コマンド               | 結果                                                                                                                 |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `npm run check`        | 成功。typecheck、ESLint、Prettierのフォーマットチェックがすべて通過しました。                                        |
+| `xvfb-run -a npm test` | 失敗。`npm run compile` は成功しましたが、`vscode-test` が `update.code.visualstudio.com` の名前解決に失敗しました。 |
