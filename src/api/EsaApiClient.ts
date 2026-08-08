@@ -19,16 +19,20 @@ function parseRateLimitHeaders(headers: Headers): RateLimitInfo {
 
   const info: RateLimitInfo = {};
   if (limit !== null) {
-    info.rateLimitLimit = parseInt(limit, 10);
+    const parsed = parseInt(limit, 10);
+    if (!Number.isNaN(parsed)) info.rateLimitLimit = parsed;
   }
   if (remaining !== null) {
-    info.rateLimitRemaining = parseInt(remaining, 10);
+    const parsed = parseInt(remaining, 10);
+    if (!Number.isNaN(parsed)) info.rateLimitRemaining = parsed;
   }
   if (reset !== null) {
-    info.rateLimitResetAt = new Date(parseInt(reset, 10) * 1000);
+    const parsed = parseInt(reset, 10);
+    if (!Number.isNaN(parsed)) info.rateLimitResetAt = new Date(parsed * 1000);
   }
   if (retryAfter !== null) {
-    info.retryAfterSeconds = parseInt(retryAfter, 10);
+    const parsed = parseInt(retryAfter, 10);
+    if (!Number.isNaN(parsed)) info.retryAfterSeconds = parsed;
   }
   return info;
 }
