@@ -13,7 +13,7 @@ esa.io の記事を Visual Studio Code 上で一覧・閲覧・編集するた�
 ## 必要要件
 
 - Visual Studio Code `^1.105.0`
-- esa.io のチームと Personal Access Token v2（`read` / `write` スコープ）
+- esa.io のチームと Personal Access Token v2（`read:post` / `write:post` スコープ）
 
 ## セットアップ
 

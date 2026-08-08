@@ -62,7 +62,17 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         ignoreFocusOut: true,
       });
       if (tokenInput !== undefined) {
-        await credentialService.setToken(tokenInput.trim());
+        const trimmed = tokenInput.trim();
+        if (trimmed.length === 0) {
+          vscode.window.showWarningMessage("Personal Access Tokenが入力されていません。");
+          return;
+        }
+        await credentialService.setToken(trimmed);
+        const isConfigured = await credentialService.isConfigured();
+        await vscode.commands.executeCommand("setContext", CONTEXT_IS_CONFIGURED, isConfigured);
+        if (isConfigured) {
+          treeProvider.refresh().catch(() => {});
+        }
         vscode.window.showInformationMessage("Personal Access Tokenを設定しました。");
       }
     }),

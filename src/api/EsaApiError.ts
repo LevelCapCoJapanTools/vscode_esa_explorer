@@ -3,6 +3,7 @@ export class EsaApiError extends Error {
   public readonly code: string | undefined;
   public readonly responseMessage: string | undefined;
   public readonly retryAfterSeconds: number | undefined;
+  public readonly rateLimitLimit: number | undefined;
   public readonly rateLimitRemaining: number | undefined;
   public readonly rateLimitResetAt: Date | undefined;
 
@@ -13,6 +14,7 @@ export class EsaApiError extends Error {
       code?: string;
       responseMessage?: string;
       retryAfterSeconds?: number;
+      rateLimitLimit?: number;
       rateLimitRemaining?: number;
       rateLimitResetAt?: Date;
     },
@@ -23,6 +25,7 @@ export class EsaApiError extends Error {
     this.code = options?.code;
     this.responseMessage = options?.responseMessage;
     this.retryAfterSeconds = options?.retryAfterSeconds;
+    this.rateLimitLimit = options?.rateLimitLimit;
     this.rateLimitRemaining = options?.rateLimitRemaining;
     this.rateLimitResetAt = options?.rateLimitResetAt;
   }

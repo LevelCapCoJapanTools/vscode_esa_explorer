@@ -5,17 +5,22 @@ import type { EsaPost, EsaPostsResponse, UpdatePostInput } from "./types.js";
 export type FetchFn = typeof fetch;
 
 interface RateLimitInfo {
+  rateLimitLimit?: number;
   rateLimitRemaining?: number;
   rateLimitResetAt?: Date;
   retryAfterSeconds?: number;
 }
 
 function parseRateLimitHeaders(headers: Headers): RateLimitInfo {
+  const limit = headers.get("x-ratelimit-limit");
   const remaining = headers.get("x-ratelimit-remaining");
   const reset = headers.get("x-ratelimit-reset");
   const retryAfter = headers.get("retry-after");
 
   const info: RateLimitInfo = {};
+  if (limit !== null) {
+    info.rateLimitLimit = parseInt(limit, 10);
+  }
   if (remaining !== null) {
     info.rateLimitRemaining = parseInt(remaining, 10);
   }
@@ -102,7 +107,7 @@ async function handleErrorResponse(response: Response): Promise<never> {
           ? `\n${rateLimitInfo.retryAfterSeconds}秒後に再実行できます。`
           : "";
       throw new EsaApiError(
-        `esa APIの利用制限を超えました。時間を置いてから再実行してください。${retryMsg}`,
+        `esa APIの利用制限を超えました。時間を置いてからTree Viewの更新（再読み込み）を行ってください。${retryMsg}`,
         options,
       );
     }
