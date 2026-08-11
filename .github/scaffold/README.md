@@ -13,9 +13,9 @@
 
 scaffold ディレクトリは次の用途で使用します。
 
-* 新しいリポジトリ作成時の **設定テンプレート**
-* プロジェクトタイプ別の **CI / 設定管理**
-* 設定ファイルの **SSOT（Single Source of Truth）**
+- 新しいリポジトリ作成時の **設定テンプレート**
+- プロジェクトタイプ別の **CI / 設定管理**
+- 設定ファイルの **SSOT（Single Source of Truth）**
 
 ここに保存された構成は **自動では使用されません。**
 
@@ -69,8 +69,8 @@ cp .github/scaffold/node-library/config/tsconfig.json .
 
 理由
 
-* GitHubの `ISSUE_TEMPLATE` や `workflow-templates` と混同しないため
-* プロジェクト骨組み（scaffolding）という開発用語として明確なため
+- GitHubの `ISSUE_TEMPLATE` や `workflow-templates` と混同しないため
+- プロジェクト骨組み（scaffolding）という開発用語として明確なため
 
 ---
 

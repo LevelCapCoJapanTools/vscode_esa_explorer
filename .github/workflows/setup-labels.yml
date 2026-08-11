@@ -35,4 +35,4 @@ jobs:
           yaml-file: .github/labels.yml
           skip-delete: false # trueのとき、定義ファイルに記載の無いラベルの削除を行わない
           dry-run: false # trueの場合は、結果のみ表示で反映しない
-          
+

@@ -3,6 +3,7 @@
 このディレクトリは Copilot / 自動エージェント向けの **仕様の単一情報源（SSOT）** です。必須ルールは `.github/copilot-instructions.md` に集約します。`.github/instructions/**/*.instructions.md` は設計書・背景資料・適用範囲のメタ情報を置く場所であり、GitHub Copilot によって**公式機能として自動的に解釈・適用される実務ルール**です。必ず以下の順で参照してください。
 
 ## 参照順（優先度順）
+
 ※ 構成定義レイヤはリポジトリ全体の前提となるため最初に参照してください。番号は通常の昇順で付与しています。
 
 1. [構成定義レイヤ](05-structure/single-repo.md) — 単一リポジトリ運用ルール
@@ -20,6 +21,7 @@
 13. [90-research/](90-research/) — RESEARCH フェーズの成果物。DESIGN、IMPLEMENT フェーズのインプット資料でもあります。
 
 ## 使い方
+
 - PR作成時は、`80-templates/pr-checklist.md`の品質ゲートを通過させること。
 - PR種別に応じて対応するテンプレートを必ず使用する：
   - DESIGN PR → [.github/PULL_REQUEST_TEMPLATE/design.md](../PULL_REQUEST_TEMPLATE/design.md)

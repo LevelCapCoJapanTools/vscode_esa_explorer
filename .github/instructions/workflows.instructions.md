@@ -5,6 +5,7 @@ applyTo:
   - ".github/workflows/**/*.yml"
   - ".github/workflows/**/*.yaml"
 ---
+
 - 最小権限の `permissions` を明示し、Secrets は必要最小限で参照する。ログに Secrets/PII を出さない。
 - アクションはバージョン固定（タグまたは commit SHA）で利用し、Deprecated アクションは避ける。
 - lint / typecheck / test / security など必須ジョブを required status checks に設定し、失敗時マージ不可にする。

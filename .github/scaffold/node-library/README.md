@@ -11,15 +11,15 @@ npm公開パッケージや内部コンポーネントライブラリを作成�
 
 この scaffold は次の用途を想定しています。
 
-* npm公開ライブラリ
-* React / TypeScript コンポーネントライブラリ
-* 内部共有パッケージ
+- npm公開ライブラリ
+- React / TypeScript コンポーネントライブラリ
+- 内部共有パッケージ
 
 例
 
-* UI component library
-* utility library
-* framework extension
+- UI component library
+- utility library
+- framework extension
 
 ---
 
@@ -46,10 +46,10 @@ node-library/
 
 基本CI
 
-* install
-* lint
-* build
-* test
+- install
+- lint
+- build
+- test
 
 ---
 
@@ -59,9 +59,9 @@ GitHub Pages公開用CI
 
 主な用途
 
-* Storybook
-* ドキュメントサイト
-* デモページ
+- Storybook
+- ドキュメントサイト
+- デモページ
 
 ---
 
@@ -71,9 +71,9 @@ npm公開CI
 
 主な処理
 
-* build
-* version
-* publish
+- build
+- version
+- publish
 
 ---
 
@@ -83,8 +83,8 @@ npm公開CI
 
 ベース設定
 
-* 共通compilerOptions
-* TypeScript strict設定
+- 共通compilerOptions
+- TypeScript strict設定
 
 ---
 
@@ -92,8 +92,8 @@ npm公開CI
 
 ライブラリビルド用
 
-* src をコンパイル
-* test を除外
+- src をコンパイル
+- test を除外
 
 ---
 
@@ -101,8 +101,8 @@ npm公開CI
 
 テスト用設定
 
-* test ディレクトリを含む
-* Jest / Vitest 用
+- test ディレクトリを含む
+- Jest / Vitest 用
 
 ---
 
@@ -126,8 +126,8 @@ cp -R .github/scaffold/node-library/ci/* .github/workflows/
 
 各プロジェクトの要件に応じて
 
-* ESLint
-* Prettier
-* bundler（tsup / rollup / vite）
+- ESLint
+- Prettier
+- bundler（tsup / rollup / vite）
 
 などを追加してください。

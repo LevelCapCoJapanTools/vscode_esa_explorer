@@ -4,6 +4,7 @@ description: src 配下のTypeScriptコードに適用する実務ルール
 applyTo:
   - "src/**/*.ts"
 ---
+
 - TypeScript は `tsconfig.json` の `module: Node16`（ESM）に従う。相対importには `.js` 拡張子を付ける（例: `import { EsaApiClient } from "../api/EsaApiClient.js"`）。
 - 型のみのimportは `import type` を使用する。`any` は使用しない。外部入力（APIレスポンス等）は `unknown` で受けて型ガード関数（`isEsaPost` 等）で絞り込む。
 - Secrets/トークン/PII をコード・ログ・テストデータに含めない。

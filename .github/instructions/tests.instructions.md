@@ -4,6 +4,7 @@ description: テストコードに適用する実務ルール
 applyTo:
   - "src/test/**/*.ts"
 ---
+
 - `@vscode/test-cli`（`.vscode-test.mjs`）を前提とし、ファイル名は `*.test.ts`、テストはMochaの `suite`/`test` で記述する。
 - テストは `src/test/` 配下に、対象ソースと対応するディレクトリ構造で配置する（例: `src/tree/CategoryTree.ts` → `src/test/tree/CategoryTree.test.ts`）。
 - 重要なバグ修正には必ず回帰テストを追加する。正常系・例外系・境界値を分けて書く。

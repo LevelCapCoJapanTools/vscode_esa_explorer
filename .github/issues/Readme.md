@@ -18,12 +18,12 @@ AI Agent（Claude Code等）がGitHub Issueを起票する際に参照するテ�
 
 ## 対応するイシューテンプレート
 
-| フェーズ | テンプレートファイル | ラベル |
-| --- | --- | --- |
-| `[RESEARCH]` | `.github/ISSUE_TEMPLATE/research_task.md` | `research` |
-| `[DESIGN]` | `.github/ISSUE_TEMPLATE/design_task.md` | `design` |
+| フェーズ      | テンプレートファイル                       | ラベル      |
+| ------------- | ------------------------------------------ | ----------- |
+| `[RESEARCH]`  | `.github/ISSUE_TEMPLATE/research_task.md`  | `research`  |
+| `[DESIGN]`    | `.github/ISSUE_TEMPLATE/design_task.md`    | `design`    |
 | `[IMPLEMENT]` | `.github/ISSUE_TEMPLATE/implement_task.md` | `implement` |
-| `[BLIND]` | `.github/ISSUE_TEMPLATE/blind_template.md` | `blind` |
+| `[BLIND]`     | `.github/ISSUE_TEMPLATE/blind_template.md` | `blind`     |
 
 ## AIへの依頼方法
 

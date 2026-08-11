@@ -1,4 +1,5 @@
 # ADR-003: skill-creator スキルの導入
+
 - Status: Accepted
 - Date: 2026-05-31
 
@@ -17,6 +18,7 @@ gh skill install anthropics/skills skill-creator
 ```
 
 インストール先:
+
 - `.agents/skills/skill-creator/` — GitHub Copilot / Codex / Gemini CLI 向け
 - `.claude/skills/skill-creator/` — Claude Code 向け
 

@@ -17,83 +17,83 @@ assignees: ""
 
 ## 0. AI Agent 契約（最初に読む）
 
-* あなたは **AI調査Agent**。このIssue本文と「入力（SSOT参照セット）」のみで作業する。
-* **コード変更は禁止**。成果物はドキュメント（`docs/research/` または Issue/PRコメント）に限定する。
-* **入力不足/矛盾** がある場合、調査を開始しない。
-  * 代わりに `BLOCKER:` として不足点を列挙し、**差し戻し**を返す。
-* 調査結論は ADR または Requirements への昇格候補を必ず明記する（Designフェーズへの引き渡しが目的）。
-* このIssueから作成するPRは **`.github/PULL_REQUEST_TEMPLATE/research.md`** を使用すること。
+- あなたは **AI調査Agent**。このIssue本文と「入力（SSOT参照セット）」のみで作業する。
+- **コード変更は禁止**。成果物はドキュメント（`docs/research/` または Issue/PRコメント）に限定する。
+- **入力不足/矛盾** がある場合、調査を開始しない。
+  - 代わりに `BLOCKER:` として不足点を列挙し、**差し戻し**を返す。
+- 調査結論は ADR または Requirements への昇格候補を必ず明記する（Designフェーズへの引き渡しが目的）。
+- このIssueから作成するPRは **`.github/PULL_REQUEST_TEMPLATE/research.md`** を使用すること。
 
 ## 1. 調査目的
 
-* 解消したい不確実性:
-* この調査がなければ何が決められないか:
-* Designフェーズで必要な結論の形:
+- 解消したい不確実性:
+- この調査がなければ何が決められないか:
+- Designフェーズで必要な結論の形:
 
 ## 2. 入力（SSOT参照セット）
 
 ### 2.1 前提ドキュメント（必須）
 
-* `.github/copilot/00-index.md`
-* `.github/copilot-instructions.md`
-* `.github/copilot/10-requirements.md`
-* `.github/copilot/20-architecture.md`
-* `.github/copilot/30-coding-standards.md`
-* `.github/copilot/50-security.md`
+- `.github/copilot/00-index.md`
+- `.github/copilot-instructions.md`
+- `.github/copilot/10-requirements.md`
+- `.github/copilot/20-architecture.md`
+- `.github/copilot/30-coding-standards.md`
+- `.github/copilot/50-security.md`
 
 ### 2.2 関連Issue/ADR
 
-* <関連IssueやADRのリンク>
+- <関連IssueやADRのリンク>
 
 ## 3. スコープ / 非ゴール
 
 ### In Scope
 
-* <調査する範囲を具体的に列挙>
+- <調査する範囲を具体的に列挙>
 
 ### Out of Scope
 
-* コード変更（調査フェーズではコード修正を行わない）
-* 設計決定（調査結論を受けて `[DESIGN]` フェーズで実施する）
-* 実装（`[IMPLEMENT]` フェーズで実施する）
+- コード変更（調査フェーズではコード修正を行わない）
+- 設計決定（調査結論を受けて `[DESIGN]` フェーズで実施する）
+- 実装（`[IMPLEMENT]` フェーズで実施する）
 
 ## 4. 調査観点
 
 > **この表が埋まっていない場合は調査開始禁止**。
 
 | No. | 調査観点 | 期待する答えの形 | 優先度（高/中/低） |
-| --- | --- | --- | --- |
-| 1 | | | |
-| 2 | | | |
-| 3 | | | |
+| --- | -------- | ---------------- | ------------------ |
+| 1   |          |                  |                    |
+| 2   |          |                  |                    |
+| 3   |          |                  |                    |
 
 ## 5. 成果物
 
-* 調査結果を以下のいずれかにまとめ、PRを作成する（コード変更なし）:
-  * `docs/research/<slug>.md`（推奨）
-  * または本IssueコメントにまとめてPRなしで完結
-* **結論**には以下を必ず含める:
-  * 各調査観点への回答
-  * ADR昇格候補（`.github/copilot/70-adr/`）または Requirements更新候補（`.github/copilot/10-requirements.md`）の明記
-  * Designフェーズへの引き継ぎ事項
+- 調査結果を以下のいずれかにまとめ、PRを作成する（コード変更なし）:
+  - `docs/research/<slug>.md`（推奨）
+  - または本IssueコメントにまとめてPRなしで完結
+- **結論**には以下を必ず含める:
+  - 各調査観点への回答
+  - ADR昇格候補（`.github/copilot/70-adr/`）または Requirements更新候補（`.github/copilot/10-requirements.md`）の明記
+  - Designフェーズへの引き継ぎ事項
 
 ## 6. 必読（規約）
 
-* `.github/copilot-instructions.md`
-* `.github/copilot/50-security.md`（Secrets/PIIを調査ドキュメントに含めない）
+- `.github/copilot-instructions.md`
+- `.github/copilot/50-security.md`（Secrets/PIIを調査ドキュメントに含めない）
 
 ## 7. Done（必須）
 
-* 調査観点4章の全項目に回答がある
-* 結論が `[DESIGN]` フェーズへ引き継げる形でまとめられている
-* ADR/Requirements昇格候補が明記されている
-* コード変更が一切ない
-* Secrets/PIIが成果物ドキュメントに含まれていない
+- 調査観点4章の全項目に回答がある
+- 結論が `[DESIGN]` フェーズへ引き継げる形でまとめられている
+- ADR/Requirements昇格候補が明記されている
+- コード変更が一切ない
+- Secrets/PIIが成果物ドキュメントに含まれていない
 
 ## 8. BLOCKER（入力不足時の返却フォーマット）
 
 > 調査開始前に不足がある場合のみ使用。
 
-* BLOCKER: <不足点>
-* 必要な追記先: <SSOT / Issue / docs>
-* 理由（1行）: <なぜこれがないと調査できないか>
+- BLOCKER: <不足点>
+- 必要な追記先: <SSOT / Issue / docs>
+- 理由（1行）: <なぜこれがないと調査できないか>

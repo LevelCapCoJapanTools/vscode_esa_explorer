@@ -49,6 +49,7 @@ applyTo:
 現時点で `docs/**/*.md` / `.github/**/*.md` の mermaid ブロックを自動検証する専用CIジョブ（mermaid-lint等）は `.github/workflows/` に存在しない。構文エラーの検出は本ファイルのルールに沿った目視確認と、ローカルでの事前確認に依存する。専用CIを追加する場合は `.github/workflows/ci.yml` にジョブを追記し、本ファイルの記述も合わせて更新すること。
 
 ローカル事前確認:
+
 ```bash
 npx @mermaid-js/mermaid-cli -i <ファイル> -o /tmp/out.svg
 ```

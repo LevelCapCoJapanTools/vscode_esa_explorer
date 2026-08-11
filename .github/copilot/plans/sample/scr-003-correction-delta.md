@@ -20,15 +20,15 @@
 
 ## 2. 変更サマリ
 
-| 区分 | 対象 | 変更概要 |
-| --- | --- | --- |
-| 追加 | `OrderInputMode` enum | 新規注文 / 訂正の動作モード識別子 |
-| 変更 | `OrderDraft` | `sourceOrderId: String?` フィールドを追加（後方互換） |
-| 変更 | `OrderInputViewModel` | `mode: OrderInputMode` を init に追加。訂正モード時の初期値設定ロジックを追加 |
-| 変更 | `OrderInputView` | `navigationTitle` をモードに応じて切り替え。ボタン文言は変更しない |
-| 変更 | `MenuDestination` | `.orderCorrectionInput(PlacedOrder)` case を追加 |
-| 変更 | `MilkOrderApp` | `.orderCorrectionInput` destination に `OrderInputView`（訂正モード）を接続 |
-| 変更 | `OrderInputViewModelTests` | 訂正モード初期値・訂正 OrderDraft 生成のテストを追加 |
+| 区分 | 対象                       | 変更概要                                                                      |
+| ---- | -------------------------- | ----------------------------------------------------------------------------- |
+| 追加 | `OrderInputMode` enum      | 新規注文 / 訂正の動作モード識別子                                             |
+| 変更 | `OrderDraft`               | `sourceOrderId: String?` フィールドを追加（後方互換）                         |
+| 変更 | `OrderInputViewModel`      | `mode: OrderInputMode` を init に追加。訂正モード時の初期値設定ロジックを追加 |
+| 変更 | `OrderInputView`           | `navigationTitle` をモードに応じて切り替え。ボタン文言は変更しない            |
+| 変更 | `MenuDestination`          | `.orderCorrectionInput(PlacedOrder)` case を追加                              |
+| 変更 | `MilkOrderApp`             | `.orderCorrectionInput` destination に `OrderInputView`（訂正モード）を接続   |
+| 変更 | `OrderInputViewModelTests` | 訂正モード初期値・訂正 OrderDraft 生成のテストを追加                          |
 
 ---
 
@@ -44,10 +44,10 @@ enum OrderInputMode {
 }
 ```
 
-| 判断理由 | 根拠 |
-| --- | --- |
-| `Bool` の `isEditing` より型安全で訂正元注文を保持できる | 5.1.1 責務分離 |
-| ViewModel・View・テストすべて同一の型で判定できる | 30-coding-standards.md |
+| 判断理由                                                 | 根拠                   |
+| -------------------------------------------------------- | ---------------------- |
+| `Bool` の `isEditing` より型安全で訂正元注文を保持できる | 5.1.1 責務分離         |
+| ViewModel・View・テストすべて同一の型で判定できる        | 30-coding-standards.md |
 
 ---
 
@@ -73,9 +73,9 @@ struct OrderDraft {
 }
 ```
 
-| 判断理由 | 根拠 |
-| --- | --- |
-| `Optional` で追加するため新規注文フロー（SCR-003/004/005）に破壊的変更なし | scr-003 § 0.2 互換性制約 |
+| 判断理由                                                                               | 根拠                          |
+| -------------------------------------------------------------------------------------- | ----------------------------- |
+| `Optional` で追加するため新規注文フロー（SCR-003/004/005）に破壊的変更なし             | scr-003 § 0.2 互換性制約      |
 | `OrderRepository.correctOrder` / `placeOrder` でこの値を使って訂正か新規かを判定できる | order-correction-flow.md §6.4 |
 
 ---
@@ -116,10 +116,10 @@ onAppear() で商品リストを取得した後:
   }
 ```
 
-| 判断理由 | 根拠 |
-| --- | --- |
-| 商品取得後に初期値をセットしないと quantities の product.id が存在しない | scr-003 §5.5 データ取得ライフサイクル |
-| `deliveryDate` の初期値を訂正元のままセットするが DatePicker で変更可能にする | 要件 §4.1 No.7 |
+| 判断理由                                                                      | 根拠                                  |
+| ----------------------------------------------------------------------------- | ------------------------------------- |
+| 商品取得後に初期値をセットしないと quantities の product.id が存在しない      | scr-003 §5.5 データ取得ライフサイクル |
+| `deliveryDate` の初期値を訂正元のままセットするが DatePicker で変更可能にする | 要件 §4.1 No.7                        |
 
 #### `validateAndProceed()` — `sourceOrderId` 設定追加
 
@@ -161,11 +161,11 @@ var navigationTitle: String {
 .navigationTitle(viewModel.navigationTitle)
 ```
 
-| その他の View 変更 | 内容 |
-| --- | --- |
-| 「確認へ進む」ボタン文言 | **変更しない**（訂正モードでも「確認へ進む」のまま） |
-| 商品リスト・合計セクション | 変更なし（初期値の違いのみ） |
-| 配達日 DatePicker | 変更なし（訂正モードでも未来日のみ選択可） |
+| その他の View 変更         | 内容                                                 |
+| -------------------------- | ---------------------------------------------------- |
+| 「確認へ進む」ボタン文言   | **変更しない**（訂正モードでも「確認へ進む」のまま） |
+| 商品リスト・合計セクション | 変更なし（初期値の違いのみ）                         |
+| 配達日 DatePicker          | 変更なし（訂正モードでも未来日のみ選択可）           |
 
 ---
 
@@ -224,15 +224,16 @@ case orderCorrectionInput(PlacedOrder)   // SCR-CO-02 訂正入力画面へ
 
 ## 4. 後方互換性チェック
 
-| 変更対象 | 既存 SCR-003（新規注文フロー）への影響 | 影響なし理由 |
-| --- | --- | --- |
-| `OrderInputMode` 追加 | なし | 新規 enum、既存コードは参照しない |
-| `OrderDraft.sourceOrderId` 追加 | なし | `Optional`（nil）追加。既存の `OrderDraft` 生成コード要修正（`sourceOrderId: nil` を追記） |
-| `OrderInputViewModel.init` 変更 | なし | `mode` はデフォルト値 `.newOrder` のため既存呼び出し元の変更不要 |
-| `OrderInputView.navigationTitle` 変更 | なし | `.newOrder` の場合は「注文入力」のまま |
-| `MenuDestination.orderCorrectionInput` 追加 | なし | 新 case 追加のみ。既存 switch は `default` または網羅済み |
+| 変更対象                                    | 既存 SCR-003（新規注文フロー）への影響 | 影響なし理由                                                                               |
+| ------------------------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `OrderInputMode` 追加                       | なし                                   | 新規 enum、既存コードは参照しない                                                          |
+| `OrderDraft.sourceOrderId` 追加             | なし                                   | `Optional`（nil）追加。既存の `OrderDraft` 生成コード要修正（`sourceOrderId: nil` を追記） |
+| `OrderInputViewModel.init` 変更             | なし                                   | `mode` はデフォルト値 `.newOrder` のため既存呼び出し元の変更不要                           |
+| `OrderInputView.navigationTitle` 変更       | なし                                   | `.newOrder` の場合は「注文入力」のまま                                                     |
+| `MenuDestination.orderCorrectionInput` 追加 | なし                                   | 新 case 追加のみ。既存 switch は `default` または網羅済み                                  |
 
 > **要対応**: `OrderDraft` に `sourceOrderId: nil` を追記する箇所一覧（実装時に検索して修正する）:
+>
 > - `OrderInputViewModel.validateAndProceed()`
 > - `MockOrderRepository` テストデータ
 > - `OrderInputViewModelTests` の `OrderDraft` 生成コード
@@ -241,22 +242,22 @@ case orderCorrectionInput(PlacedOrder)   // SCR-CO-02 訂正入力画面へ
 
 ## 5. 追加テストケース（`OrderInputViewModelTests` 追記分）
 
-| 区分 | テスト名 | シナリオ | 期待結果 |
-| --- | --- | --- | --- |
-| 正常 | 訂正モード初期値設定 | `.correction(placedOrder)` で init → `onAppear()` | `deliveryDate == placedOrder.deliveryDate`, `quantities` が元注文の数量で初期化 |
-| 正常 | 訂正モード notes 初期値 | `.correction(placedOrder)` で init → `onAppear()` | `notes == placedOrder.notes` |
-| 正常 | 訂正 OrderDraft の sourceOrderId | `.correction(placedOrder)` → `validateAndProceed()` | `draft.sourceOrderId == placedOrder.orderId` |
-| 正常 | 新規注文の sourceOrderId は nil | `.newOrder` → `validateAndProceed()` | `draft.sourceOrderId == nil` |
-| 正常 | navigationTitle 訂正モード | `.correction(placedOrder)` で init | `viewModel.navigationTitle == "注文訂正"` |
-| 正常 | navigationTitle 新規注文モード | `.newOrder` で init | `viewModel.navigationTitle == "注文入力"` |
-| 境界 | 訂正元の数量を 0 に変更して再確定 | 訂正モードで全 quantity を 0 にして validateAndProceed() | `errorMessage == "商品を1件以上選択してください"` |
+| 区分 | テスト名                          | シナリオ                                                 | 期待結果                                                                        |
+| ---- | --------------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------- |
+| 正常 | 訂正モード初期値設定              | `.correction(placedOrder)` で init → `onAppear()`        | `deliveryDate == placedOrder.deliveryDate`, `quantities` が元注文の数量で初期化 |
+| 正常 | 訂正モード notes 初期値           | `.correction(placedOrder)` で init → `onAppear()`        | `notes == placedOrder.notes`                                                    |
+| 正常 | 訂正 OrderDraft の sourceOrderId  | `.correction(placedOrder)` → `validateAndProceed()`      | `draft.sourceOrderId == placedOrder.orderId`                                    |
+| 正常 | 新規注文の sourceOrderId は nil   | `.newOrder` → `validateAndProceed()`                     | `draft.sourceOrderId == nil`                                                    |
+| 正常 | navigationTitle 訂正モード        | `.correction(placedOrder)` で init                       | `viewModel.navigationTitle == "注文訂正"`                                       |
+| 正常 | navigationTitle 新規注文モード    | `.newOrder` で init                                      | `viewModel.navigationTitle == "注文入力"`                                       |
+| 境界 | 訂正元の数量を 0 に変更して再確定 | 訂正モードで全 quantity を 0 にして validateAndProceed() | `errorMessage == "商品を1件以上選択してください"`                               |
 
 ---
 
 ## 6. 未確定事項（訂正フロー設計時に決定すること）
 
-| 論点 | 現状 | 決定先 |
-| --- | --- | --- |
-| 訂正確認画面（SCR-CO-03）で元注文との差分を表示するか | 差分表示なし（現状の `OrderConfirmationView` を再利用） | `order-correction-flow.md` plan で決定 |
-| `OrderRepository` に `correctOrder(original:correction:)` を追加するか `placeOrder` を再利用するか | 未定 | `order-correction-flow.md` plan で決定 |
-| 訂正完了画面のタイトル・文言（「注文を受け付けました」→「訂正を受け付けました」等） | 未定 | `order-correction-flow.md` plan で決定 |
+| 論点                                                                                               | 現状                                                    | 決定先                                 |
+| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | -------------------------------------- |
+| 訂正確認画面（SCR-CO-03）で元注文との差分を表示するか                                              | 差分表示なし（現状の `OrderConfirmationView` を再利用） | `order-correction-flow.md` plan で決定 |
+| `OrderRepository` に `correctOrder(original:correction:)` を追加するか `placeOrder` を再利用するか | 未定                                                    | `order-correction-flow.md` plan で決定 |
+| 訂正完了画面のタイトル・文言（「注文を受け付けました」→「訂正を受け付けました」等）                | 未定                                                    | `order-correction-flow.md` plan で決定 |

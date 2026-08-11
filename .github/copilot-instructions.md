@@ -1,4 +1,5 @@
 # Copilot 規範層（全タスク共通で短く強い指示）
+
 - 仕様の入口は `.github/copilot/00-index.md`。参照順に従い、設計→実装の2段階ループを厳守する。
 - PR種別に応じて以下テンプレートを必ず使用する：
   - DESIGN PR → [.github/PULL_REQUEST_TEMPLATE/design.md](PULL_REQUEST_TEMPLATE/design.md)
