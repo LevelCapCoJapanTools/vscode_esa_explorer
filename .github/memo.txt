@@ -1,7 +1,7 @@
 workflows
 　githubワークフローの定義ファイルを置く場所です
 assets
-　reeadme.mdファイルが参照する画像ファイル等を置くフォルダです
+　README.mdファイルが参照する画像ファイル等を置くフォルダです
 CODEOWNERS
 　コードに関する PR が作成された際にそのオーナーを自動でアサインすることができます。
 　また、Branch protection rule と組み合わせ、
