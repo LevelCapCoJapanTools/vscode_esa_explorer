@@ -1,0 +1,12 @@
+.github/
+.vscode/
+docs/
+src/
+.editorconfig
+.eslintignore
+.nvmrc
+.prettierignore
+.prettierrc.json
+.vscode-test.mjs
+eslint.config.mjs
+tsconfig.json
