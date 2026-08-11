@@ -1,31 +1,17 @@
-# esa Explorer 開発ガイド（Copilot向け）
-
-このリポジトリは esa.io の記事を Visual Studio Code 上で一覧・閲覧・編集する拡張機能です。
-
-## 技術スタック
-
-- 言語: TypeScript（`module: Node16`、ESM形式の`.js`拡張子付きimport）
-- パッケージマネージャー: npm
-- テスト: `@vscode/test-cli` + Mocha（`suite`/`test`）
-- Lint: ESLint（`eslint.config.mjs`）
-- フォーマット: Prettier
-
-## コーディング規約
-
-- 型のみのimportは`import type`を使用する。
-- 相対importは必ず`.js`拡張子を付ける（`module: Node16`のため）。
-- `any`は使用しない（`@typescript-eslint/no-explicit-any`が`error`）。
-- ユーザー向けメッセージは日本語で記述する。
-- Personal Access Tokenは`SecretStorage`にのみ保存し、ログやエラーメッセージに出力しない。
-
-## アーキテクチャ
-
-- `EsaApiClient`: esa APIへのアクセス。トークンは引数で受け取る（内部保持しない）。
-- `CredentialService`: 認証情報の入出力UIとSecretStorageの管理。
-- `PostCache`: 記事のメモリキャッシュ。
-- `EsaFileSystemProvider`: `esa:`スキームの仮想ファイルシステム。保存時にAPIへPATCH。
-- `EsaPostTreeProvider` / `CategoryTree`: カテゴリ階層のTree View構築。
-
-## 検証
-
-変更後は `npm run check`（typecheck + lint + format:check）と `npm test` を実行してください。
+# Copilot 規範層（全タスク共通で短く強い指示）
+- 仕様の入口は `.github/copilot/00-index.md`。参照順に従い、設計→実装の2段階ループを厳守する。
+- PR種別に応じて以下テンプレートを必ず使用する：
+  - DESIGN PR → [.github/PULL_REQUEST_TEMPLATE/design.md](PULL_REQUEST_TEMPLATE/design.md)
+  - IMPLEMENT PR → [.github/PULL_REQUEST_TEMPLATE/implement.md](PULL_REQUEST_TEMPLATE/implement.md)
+  - RESEARCH PR → [.github/PULL_REQUEST_TEMPLATE/research.md](PULL_REQUEST_TEMPLATE/research.md)
+  - BLIND PR → [.github/PULL_REQUEST_TEMPLATE/blind.md](PULL_REQUEST_TEMPLATE/blind.md)
+- コード/ドキュメントは **完全実装**で提出し、擬似コード・未完成サンプルは禁止。出力は必要最小限の差分にとどめる。
+- **PRタイトルは必ず日本語で記述すること。**（例: `feat: 新しい認証処理の追加` のように、日本語で目的を明示する。）
+- コミットメッセージは `.github/instructions/commit-messages.instructions.md` に従い、日本語・`fix:`/`hotfix:`/`feat:` のプレフィックス付きで3行以上の構造を守ること（Copilot 生成分も含む）。
+- Secrets・個人情報をコード/ログ/ドキュメントに出さない。ログは構造化し、例外は握り潰さず意味のあるメッセージで扱う。
+- 互換性を壊さない方針がデフォルト。破壊的変更が必要なときは移行策を plan に明記する。
+- 実装前に `.github/copilot/80-templates/implementation-plan.md` を満たす plan を作成・確認する（設計Issue）。実装Issueでは plan から逸脱しない。
+- 型・例外・入力検証・テスト追加を必須とし、`.github/instructions/**/*.instructions.md` の実務ルールを守る。
+- Doc コメント（TSDoc `/** */`）は日本語で記述する。インラインコメント（`//`）は「なぜ」が自明でない箇所のみ日本語で追加し、過剰な 1 行コメントは書かない。
+- Done 定義: lint / typecheck / test / security など CI 品質ゲートが全て緑、受入条件をテストで担保、関連ドキュメントを更新すること。
+- **ADR 新規作成フロー**: 自律的に内容を推論・補完してはならない。`インプット情報`・`スコープ（決定粒度）`・`確定事項`・`仮定のブロッキング可否`・`却下した代替案` の各項目について **AI が人間へ質問 → 人間が回答 → AI が記述** の順序を厳守し、回答を受領してから `.github/copilot/70-adr/ADR-template.md` に従って記述すること。

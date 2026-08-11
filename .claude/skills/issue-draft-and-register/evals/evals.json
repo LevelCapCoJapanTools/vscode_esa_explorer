@@ -1,0 +1,47 @@
+{
+  "skill_name": "issue-draft-and-register",
+  "evals": [
+    {
+      "id": 0,
+      "name": "design-tag-filter",
+      "prompt": "タグによるフィルタ表示機能のDESIGNイシューを起票してください。Tree Viewに表示する記事一覧を、選択したタグで絞り込めるようにしたいです。",
+      "expected_output": "`.github/ISSUE_TEMPLATE/design_task.md`の構造に沿ってタイトル・本文がその場で組み立てられ、プレースホルダーを残さずチャット上の承認を待たずにGitHub Issueとして登録される。`.github/issues/`配下に新規ファイルは作成されない。config/project.jsonの設定に従いGitHub Projectへ追加される。",
+      "files": []
+    },
+    {
+      "id": 1,
+      "name": "research-api-rate-limit-behavior",
+      "prompt": "esa Public API v1のレート制限の挙動について不確実性があるので、RESEARCHイシューを起票してください。大量の記事があるチームでlistAllPostsを実行したときにレート制限に達するのか、達した場合のリトライ方針をどう設計すべきか分かっていません。",
+      "expected_output": "`.github/ISSUE_TEMPLATE/research_task.md`に沿ってコード変更を行わない調査内容として組み立てられ、承認待ちせずGitHub Issueとして登録される。`.github/issues/`配下にファイルは作成されない。",
+      "files": []
+    },
+    {
+      "id": 2,
+      "name": "blind-readme-typo-implicit",
+      "prompt": "READMEの誤字を直すだけの軽い修正Issueを作ってほしいです。仕様書を参照する必要はないです。",
+      "expected_output": "フェーズ名を明示していないにもかかわらず、参照禁止・本文完結という特徴からBLINDフェーズと判断し、`.github/ISSUE_TEMPLATE/blind_template.md`に沿って組み立てられ、承認待ちせずGitHub Issueとして登録される。",
+      "files": []
+    },
+    {
+      "id": 3,
+      "name": "multi-draft-design-and-research",
+      "prompt": "複数チームの切り替え機能のDESIGNイシューと、esa.io側でチームを複数持つユーザーの認証情報保存方法についてのRESEARCHイシューを、まとめて2件起票してください。",
+      "expected_output": "1回の依頼で2件のGitHub Issueがそれぞれ承認待ちせず登録され、フェーズが混在しない（1つのIssue本文にDESIGNとRESEARCHの内容が混ざらない）。",
+      "files": []
+    },
+    {
+      "id": 4,
+      "name": "direct-edit-after-registration",
+      "prompt": "さっき登録したIssue #123（タグフィルタのDESIGN）だけど、対象機能の説明が古いままだから直しておいて。カテゴリだけじゃなくタグでも絞り込めるようにしたい、という説明にしてほしいです。",
+      "expected_output": "新しいGitHub Issueを作らず、`issue_write`（update）でIssue #123の本文を直接編集して指摘内容を反映する。`.github/issues/`配下にもファイルを作成しない。",
+      "files": []
+    },
+    {
+      "id": 5,
+      "name": "project-config-missing-first-run",
+      "prompt": "（config/project.jsonが存在しない状態で）記事プレビュー統合機能のDESIGNイシューを起票してください。",
+      "expected_output": "GitHub Issueの登録自体は行われる。GitHub Projectへの追加の前に、登録先のGitHub Project（owner・プロジェクト番号、またはProjectを使わない旨）を人間に尋ね、回答をもとに`config/project.json`を新規作成してから追加する。既存の別プロジェクトの値を推測や流用で埋めない。",
+      "files": []
+    }
+  ]
+}
