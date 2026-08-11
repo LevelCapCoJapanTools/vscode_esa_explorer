@@ -584,11 +584,12 @@ flowchart TD
 ```mermaid
 classDiagram
   direction TB
+  %% CategoryOrNull は TypeScript の string | null に対応（Mermaid の Union 記法回避のため単純化）。正式な完全表記は 6.3.3.2 を参照
   class CreatePostInput {
     +name: string
     +bodyMd?: string
     +tags?: List~string~
-    +category?: string | null
+    +category?: CategoryOrNull
     +wip?: boolean
     +message?: string
   }
@@ -598,7 +599,7 @@ classDiagram
     +full_name: string
     +wip: boolean
     +body_md: string
-    +category: string | null
+    +category: CategoryOrNull
     +tags: List~string~
     +revision_number: number
     +updated_by: EsaUser
