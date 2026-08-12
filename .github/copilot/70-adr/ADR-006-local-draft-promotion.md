@@ -139,10 +139,10 @@ VS Code から esa.io の記事を「新規作成」するとき、ボタンを�
 | --- | ----------------------------------------------------------------------------------------------------------- | -------------- |
 | 1   | 新規作成が `esa-draft:` の Draft を経由し、初回保存まで esa.io へ送信しない                                 | Design Review  |
 | 2   | 初回保存の成功時のみ Draft を破棄し、失敗時は本文が残る                                                     | Test Candidate |
-| 6   | POST成功後の `esa:` オープン失敗時は Draft を破棄せず `promotedPostNumber` を保持し、再保存で再 POST しない | Test Candidate |
 | 3   | 既存 `EsaFileSystemProvider` の `create` 拒否が変更されていない                                             | Static Check   |
 | 4   | Draft 責務が `EsaDraftFileSystemProvider` として分離されている                                              | Design Review  |
 | 5   | 新規作成時にタイトル入力を要求していない                                                                    | Design Review  |
+| 6   | POST成功後の `esa:` オープン失敗時は Draft を破棄せず `promotedPostNumber` を保持し、再保存で再 POST しない | Test Candidate |
 
 ## 判断に関係する非機能影響
 
