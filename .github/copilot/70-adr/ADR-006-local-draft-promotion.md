@@ -102,7 +102,7 @@ VS Code から esa.io の記事を「新規作成」するとき、ボタンを�
 
 ## 詳細決定事項
 
-- URI スキーム: 新規下書きは `esa-draft:` スキームで表す（例: `esa-draft:/<uuid>.md`）。既存の実記事は従来どおり `esa:` スキーム（`src/constants.ts` の `ESA_URI_SCHEME`）。`<uuid>` は Draft 生成時に採番する一意識別子とする。
+- URI スキーム: 新規下書きは `esa-draft:` スキームで表す（例: `esa-draft://{team}/{uuid}.md`）。既存の実記事は従来どおり `esa:` スキーム（`src/constants.ts` の `ESA_URI_SCHEME`、`esa://{team}/posts/{N}.md`）。`{uuid}` は Draft 生成時に採番する一意識別子とする。
 - Draft メタ情報: `EsaDraftManager` が `id`（UUID）と `initialCategory`（任意）を Draft 単位で保持する。本文は複製せず、`esa-draft:` の `EsaDraftFileSystemProvider` が管理するファイル内容を唯一の情報源（SSOT）とする。
 - 昇格の起点値:
   - Tree View 右上（通常の New Post）: `category = Users/{screen_name}`。
