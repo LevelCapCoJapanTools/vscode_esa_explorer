@@ -55,6 +55,7 @@ VS Code から esa.io チームへ新規記事を作成できるようにする�
 - [ ] Draft はローカルの `esa-draft:` ドキュメントとして開き、この時点ではネットワーク通信・記事番号を持たない。
 - [ ] Draft の初回保存で `POST /teams/:team/posts`（`name="Untitled"`, `wip=true`, `category`, `body_md`）を実行し、リモート記事 `#N` に昇格する。
 - [ ] 昇格成功後、リモート記事 `esa:` ドキュメントを開き、Draft ドキュメントは破棄する。以降の保存は既存の `updatePost`（PATCH）で `#N` を更新する。
+- [ ] POST 成功後に `esa:` オープンが失敗した場合は Draft を破棄せず `promotedPostNumber` を保持し、再保存時は再 POST せず `esa:` オープンのみ再試行する（重複記事を作らない）。
 - [ ] 昇格失敗時は Draft を破棄せず本文を保持し、エラーを通知する。
 - [ ] lint / typecheck / test / security の CI 品質ゲートが全て緑。
 
@@ -82,19 +83,20 @@ VS Code から esa.io チームへ新規記事を作成できるようにする�
 
 ### 3.1 機能要件（FR）
 
-| ID    | 要件                                                                                              | 根拠                |
-| ----- | ------------------------------------------------------------------------------------------------- | ------------------- |
-| FR-01 | New Post 操作で `esa-draft:` ドキュメントを開く。この時点でネットワーク通信を行わない。           | ADR-006 §決定       |
-| FR-02 | Draft の初回保存を `EsaDraftFileSystemProvider.writeFile` が検知し、昇格処理を開始する。          | ADR-006 §決定       |
-| FR-03 | 昇格は `POST /teams/:team/posts` を `{ post: { name, body_md, category, wip } }` 形式で送信する。 | esa API             |
-| FR-04 | 昇格時の既定値は `name="Untitled"`、`wip=true`、`category` は入力元に応じて決定する。             | ADR-006 §決定       |
-| FR-05 | 昇格トランザクションの順序は POST 成功 → `PostCache` 登録 → `esa:` を開く → Draft 破棄、とする。  | ADR-006 §決定       |
-| FR-06 | 昇格失敗時は Draft を破棄せず本文を保持し、`showErrorMessage` で通知する。                        | ADR-006 §決定       |
-| FR-07 | タイトル入力を要求しない。Markdown 本文の先頭行をタイトルとして解釈しない。                       | ADR-006 §決定       |
-| FR-08 | カテゴリは、右クリック起点なら当該カテゴリ、New Post 起点なら `Users/{screen_name}` を使う。      | ADR-006 §決定       |
-| FR-09 | 昇格応答は `isEsaPost` で検証し、不正応答は `EsaApiError` として扱う。                            | 既存パターン        |
-| FR-10 | 未認証（トークン無/失効）時は昇格せず、Draft を保持したままエラーを通知する。                     | ADR-006 §決定       |
-| FR-11 | 既存 `EsaFileSystemProvider.writeFile` の `create` 拒否（`:96-98`）は変更しない。                 | ADR-006 §スコープ外 |
+| ID     | 要件                                                                                                                                                              | 根拠                |
+| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
+| FR-01  | New Post 操作で `esa-draft:` ドキュメントを開く。この時点でネットワーク通信を行わない。                                                                           | ADR-006 §決定       |
+| FR-02  | Draft の初回保存を `EsaDraftFileSystemProvider.writeFile` が検知し、昇格処理を開始する。                                                                          | ADR-006 §決定       |
+| FR-03  | 昇格は `POST /teams/:team/posts` を `{ post: { name, body_md, category, wip } }` 形式で送信する。                                                                 | esa API             |
+| FR-04  | 昇格時の既定値は `name="Untitled"`、`wip=true`、`category` は入力元に応じて決定する。                                                                             | ADR-006 §決定       |
+| FR-05  | 昇格トランザクションの順序は POST 成功 → `PostCache` 登録 → `promotedPostNumber=N` 記録 → `esa:` を開く → Draft 破棄、とする。                                    | ADR-006 §決定       |
+| FR-05b | POST 成功後の `esa:` open 失敗時は Draft を破棄せず PROMOTED_PENDING_OPEN（`promotedPostNumber=N` 保持）とし、再保存では再 POST せず `esa:` open のみ再試行する。 | ADR-006 §確定8      |
+| FR-06  | 昇格失敗時は Draft を破棄せず本文を保持し、`showErrorMessage` で通知する。                                                                                        | ADR-006 §決定       |
+| FR-07  | タイトル入力を要求しない。Markdown 本文の先頭行をタイトルとして解釈しない。                                                                                       | ADR-006 §決定       |
+| FR-08  | カテゴリは、右クリック起点なら当該カテゴリ、New Post 起点なら `Users/{screen_name}` を使う。                                                                      | ADR-006 §決定       |
+| FR-09  | 昇格応答は `isEsaPost` で検証し、不正応答は `EsaApiError` として扱う。                                                                                            | 既存パターン        |
+| FR-10  | 未認証（トークン無/失効）時は昇格せず、Draft を保持したままエラーを通知する。                                                                                     | ADR-006 §決定       |
+| FR-11  | 既存 `EsaFileSystemProvider.writeFile` の `create` 拒否（`:96-98`）は変更しない。                                                                                 | ADR-006 §スコープ外 |
 
 ### 3.2 非機能要件（NFR）
 
@@ -166,9 +168,28 @@ sequenceDiagram
     DP->>Api: createPost ［name=Untitled, wip=true, category, body_md］
     Api-->>DP: 201 EsaPost ［#N］
     DP->>Cache: set ［#N］
+    DP->>Mgr: promotedPostNumber=N を記録 ［PROMOTED_PENDING_OPEN］
     DP->>User: esa: ドキュメント ［#N］を開く
-    DP->>Mgr: Draft を破棄
+    DP->>Mgr: Draft を破棄 ［DONE］
     DP->>Tree: refresh
+```
+
+#### SEQ-01b 中間状態系（POST成功・esa: open 失敗 → 再保存）
+
+```mermaid
+sequenceDiagram
+    actor User as 利用者
+    participant DP as EsaDraftFileSystemProvider
+    participant Mgr as EsaDraftManager
+    participant Api as EsaApiClient
+
+    Note over DP,Mgr: 直前の保存で POST は成功済み ［promotedPostNumber=N］
+    User->>DP: 再保存 ［writeFile draftUri, body］
+    DP->>Mgr: promotedPostNumber を確認 ［設定済み］
+    DP->>DP: createPost を呼ばない ［重複記事を作らない］
+    DP->>User: esa: ドキュメント ［#N］の open を再試行
+    Api-->>DP: open 成功
+    DP->>Mgr: Draft を破棄 ［DONE］
 ```
 
 #### SEQ-02 業務エラー系（バリデーション・権限）
@@ -217,23 +238,30 @@ flowchart TD
     E -->|"正常"| F["EsaPost を返す"]
 ```
 
-#### FLOW-02 EsaDraftFileSystemProvider.writeFile（昇格）
+#### FLOW-02 EsaDraftFileSystemProvider.writeFile（昇格・3状態）
+
+昇格は `promotedPostNumber` により 3 状態（LOCAL / PROMOTED_PENDING_OPEN / DONE）で分岐する。`POST成功 → esa: open失敗` は独立分岐とし、この状態での再保存は再 POST せず記事番号 `#N` で open を再試行する。
 
 ```mermaid
 flowchart TD
-    A["writeFile draftUri, body"] --> B{"当該 Draft は昇格済みか"}
-    B -->|"はい"| Z["何もしない ［昇格後は破棄済み］"]
-    B -->|"いいえ"| C["本文をメモリに保持"]
+    A["writeFile draftUri, body"] --> S{"Draft の状態 ［promotedPostNumber］"}
+    S -->|"DONE ［Draft破棄済み・存在しない］"| Z["何もしない"]
+    S -->|"PROMOTED_PENDING_OPEN ［#N 設定済み］"| R["本文をメモリに保持"]
+    R --> O["esa: ［#N］の open を再試行"]
+    O --> P{"open 成功か"}
+    P -->|"いいえ"| Y["Draft を PROMOTED_PENDING_OPEN のまま保持し エラー通知"]
+    P -->|"はい"| K["Draft を破棄し Tree を refresh ［DONE］"]
+    S -->|"LOCAL ［未設定］"| C["本文をメモリに保持"]
     C --> D["トークンを CredentialService から取得"]
     D --> E{"トークンあり"}
-    E -->|"なし"| Y["Draft 保持し エラー通知"]
+    E -->|"なし"| Y2["Draft を LOCAL のまま保持し エラー通知"]
     E -->|"あり"| F["category を解決 ［initialCategory または Users/screen_name］"]
     F --> G["createPost ［name=Untitled, wip=true, category, body_md］"]
-    G --> H{"成功か"}
-    H -->|"いいえ"| Y
-    H -->|"はい"| I["PostCache へ登録"]
-    I --> J["esa: ［#N］を開く"]
-    J --> K["Draft を破棄し Tree を refresh"]
+    G --> H{"POST 成功か"}
+    H -->|"いいえ"| Y2
+    H -->|"はい"| I["PostCache へ登録し promotedPostNumber=N を記録 ［PROMOTED_PENDING_OPEN］"]
+    I --> J["esa: ［#N］の open を試行"]
+    J --> P
 ```
 
 #### FLOW-03 createDraftCommand
@@ -267,6 +295,7 @@ classDiagram
     class EsaDraft {
         +string id
         +string initialCategory
+        +number promotedPostNumber
     }
     class EsaDraftManager {
         +register(uri, draft) void
@@ -314,10 +343,12 @@ export interface EsaUser {
 export interface EsaDraft {
   id: string;
   initialCategory?: string;
+  /** POST 成功済みの記事番号。設定済みは PROMOTED_PENDING_OPEN（Remote open 未完了）を表す。 */
+  promotedPostNumber?: number;
 }
 ```
 
-> Draft の本文（SSOT）は `esa-draft:` ドキュメントの内容であり、`EsaDraft` には複製しない。`EsaDraftManager` はメタデータ（`id` / `initialCategory`）のみを保持し、本文は `EsaDraftFileSystemProvider` がメモリで保持する。
+> Draft の本文（SSOT）は `esa-draft:` ドキュメントの内容であり、`EsaDraft` には複製しない。`EsaDraftManager` はメタデータ（`id` / `initialCategory` / `promotedPostNumber`）のみを保持し、本文は `EsaDraftFileSystemProvider` がメモリで保持する。`promotedPostNumber` は昇格の 3 状態（未設定=LOCAL、設定済み=PROMOTED_PENDING_OPEN、破棄済み=DONE）を判別する状態フラグであり、POST 成功後に記録して再保存時の再 POST を防ぐ。
 
 ### 6.3 ApiClient シグネチャ（`src/api/EsaApiClient.ts`）
 
@@ -334,7 +365,8 @@ getAuthenticatedUser(token: string): Promise<EsaUser>;
 ## 7. データ
 
 - 永続化なし。作成結果は `PostCache`（メモリ）へ反映し、Tree を `refresh` する。
-- Draft 本文は `EsaDraftFileSystemProvider` のメモリ Map（`uri → Uint8Array`）で保持。昇格成功で破棄、失敗で保持継続。VS Code 再起動をまたぐ保持は行わない。
+- Draft 本文は `EsaDraftFileSystemProvider` のメモリ Map（`uri → Uint8Array`）で保持。`esa:` open 成功（DONE）で破棄、POST 失敗・`esa:` open 失敗（LOCAL / PROMOTED_PENDING_OPEN）で保持継続。VS Code 再起動をまたぐ保持は行わない。
+- Draft メタ（`id` / `initialCategory` / `promotedPostNumber`）は `EsaDraftManager` のメモリで保持。`promotedPostNumber` は POST 成功時に記録し、再保存時の再 POST 判定に用いる。
 
 ---
 
@@ -370,9 +402,12 @@ getAuthenticatedUser(token: string): Promise<EsaUser>;
 
 ### 8.3 昇格トランザクションの要点
 
-- **破棄は必ず POST 成功後**。POST 前・失敗時に Draft を破棄しない（本文喪失防止）。
+- **破棄は必ず POST 成功かつ `esa:` open 成功後**。POST 前・POST 失敗時・`esa:` open 失敗時は Draft を破棄しない（本文喪失防止）。
 - 昇格は「`esa:` を開く → `esa-draft:` を閉じる」。URI 同一性は変更しない。
-- 二重昇格防止のため、Provider は昇格済み Draft を記録し、再 `writeFile` を no-op にする。
+- 昇格は `EsaDraft.promotedPostNumber` により 3 状態で管理する。
+  - **LOCAL**（未設定）: `createPost` を実行する。
+  - **PROMOTED_PENDING_OPEN**（`#N` 設定済み・`esa:` open 未完了）: 再 `writeFile` では `createPost` を実行せず、記事番号 `#N` の `esa:` open のみ再試行する（重複記事作成を防止）。
+  - **DONE**（open 成功・Draft 破棄済み）: 以降は `esa:` の `updatePost` に委譲する。
 
 ---
 
@@ -380,17 +415,19 @@ getAuthenticatedUser(token: string): Promise<EsaUser>;
 
 `@vscode/test-cli`（Mocha）。`fetch` と `SecretStorage` を差し替える。
 
-| 分類           | ケース                  | 期待                                                            |
-| -------------- | ----------------------- | --------------------------------------------------------------- |
-| 正常           | New Post → Draft を開く | ネットワーク未呼び出し、`esa-draft:` ドキュメントが開く         |
-| 正常           | 初回保存で昇格          | `createPost` が `{ post: {...} }` で呼ばれ `#N` に昇格          |
-| 正常           | 昇格順序                | POST 成功後に Cache 登録 → `esa:` open → Draft 破棄             |
-| 正常           | カテゴリ解決            | 右クリック時は当該カテゴリ、New Post 時は `Users/{screen_name}` |
-| 業務エラー     | 4xx 応答                | `EsaApiError` を通知、Draft を破棄しない                        |
-| システムエラー | 通信例外                | ログ出力・エラー通知、Draft を破棄しない                        |
-| 境界           | 未認証で保存            | 昇格せず Draft 保持、エラー通知                                 |
-| 境界           | 空本文で保存            | `body_md=""` で昇格（タイトル入力は不要）                       |
-| 境界           | 昇格後の再保存          | Draft 側 `writeFile` は no-op（以降は `esa:` の `updatePost`）  |
+| 分類           | ケース                    | 期待                                                                            |
+| -------------- | ------------------------- | ------------------------------------------------------------------------------- |
+| 正常           | New Post → Draft を開く   | ネットワーク未呼び出し、`esa-draft:` ドキュメントが開く                         |
+| 正常           | 初回保存で昇格            | `createPost` が `{ post: {...} }` で呼ばれ `#N` に昇格                          |
+| 正常           | 昇格順序                  | POST 成功後に Cache 登録 → `promotedPostNumber` 記録 → `esa:` open → Draft 破棄 |
+| 中間状態       | POST成功・`esa:` open失敗 | Draft を破棄せず PROMOTED_PENDING_OPEN で保持、`promotedPostNumber=N` を記録    |
+| 中間状態       | PENDING_OPEN で再保存     | `createPost` を再呼び出しせず、`#N` の `esa:` open のみ再試行                   |
+| 正常           | カテゴリ解決              | 右クリック時は当該カテゴリ、New Post 時は `Users/{screen_name}`                 |
+| 業務エラー     | 4xx 応答                  | `EsaApiError` を通知、Draft を破棄しない                                        |
+| システムエラー | 通信例外                  | ログ出力・エラー通知、Draft を破棄しない                                        |
+| 境界           | 未認証で保存              | 昇格せず Draft 保持、エラー通知                                                 |
+| 境界           | 空本文で保存              | `body_md=""` で昇格（タイトル入力は不要）                                       |
+| 境界           | 昇格後の再保存            | Draft 側 `writeFile` は no-op（以降は `esa:` の `updatePost`）                  |
 
 ---
 
