@@ -312,7 +312,7 @@ classDiagram
     EsaDraftFileSystemProvider --> CreatePostInput
 ```
 
-> 注: `CategoryOrNull` は `string | null`、`StringList` は `string[]` の別名。Mermaid ラベルの制約を避けるためのエイリアス表記。`CreatePostInput` の `bodyMd` / `category` / `wip` / `tags` / `message` と、`EsaDraft` の `initialCategory` / `promotedPostNumber` は optional。
+> 注: `CategoryOrNull` は `string | null`、`StringList` は `string[]` の別名。Mermaid ラベルの制約を避けるためのエイリアス表記。`CreatePostInput` の `name` は必須、`bodyMd` / `category` / `wip` / `tags` / `message` と、`EsaDraft` の `initialCategory` / `promotedPostNumber` は optional。
 
 ---
 
