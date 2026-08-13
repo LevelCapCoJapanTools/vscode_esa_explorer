@@ -181,14 +181,14 @@ sequenceDiagram
     actor User as 利用者
     participant DP as EsaDraftFileSystemProvider
     participant Mgr as EsaDraftManager
-    participant Api as EsaApiClient
+    participant VS as VS Code
 
     Note over DP,Mgr: 直前の保存で POST は成功済み ［promotedPostNumber=N］
     User->>DP: 再保存 ［writeFile draftUri, body］
     DP->>Mgr: promotedPostNumber を確認 ［設定済み］
     DP->>DP: createPost を呼ばない ［重複記事を作らない］
-    DP->>User: esa: ドキュメント ［#N］の open を再試行
-    Api-->>DP: open 成功
+    DP->>VS: esa: ドキュメント ［#N］の open を再試行
+    VS-->>DP: open 成功
     DP->>Mgr: Draft を破棄 ［DONE］
 ```
 
@@ -312,7 +312,7 @@ classDiagram
     EsaDraftFileSystemProvider --> CreatePostInput
 ```
 
-> 注: `CategoryOrNull` は `string | null`、`StringList` は `string[]` の別名。Mermaid ラベルの制約を避けるためのエイリアス表記。
+> 注: `CategoryOrNull` は `string | null`、`StringList` は `string[]` の別名。Mermaid ラベルの制約を避けるためのエイリアス表記。`CreatePostInput` の `bodyMd` / `category` / `wip` / `tags` / `message` と、`EsaDraft` の `initialCategory` / `promotedPostNumber` は optional。
 
 ---
 
