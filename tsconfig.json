@@ -2,7 +2,8 @@
   "compilerOptions": {
     "module": "Node16",
     "target": "ES2022",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM"],
+    "types": ["node", "mocha"],
     "outDir": "./out",
     "rootDir": "./src",
     "strict": true,
@@ -14,7 +15,8 @@
     "forceConsistentCasingInFileNames": true,
     "esModuleInterop": true,
     "sourceMap": true,
-    "declaration": false
+    "declaration": false,
+    "moduleResolution": "Node16"
   },
   "include": ["src"],
   "exclude": ["node_modules", ".vscode-test"]

@@ -4,6 +4,7 @@ export const SECRET_STORAGE_KEY = "vscode-esa-explorer.personalAccessToken";
 export const SETTING_TEAM_NAME = "esaExplorer.teamName";
 export const CONTEXT_IS_CONFIGURED = "esaExplorer.isConfigured";
 export const ESA_URI_SCHEME = "esa";
+export const ESA_DRAFT_URI_SCHEME = "esa-draft";
 export const API_BASE_URL = "https://api.esa.io/v1";
 export const API_TIMEOUT_MS = 15_000;
 export const API_PER_PAGE = 100;
