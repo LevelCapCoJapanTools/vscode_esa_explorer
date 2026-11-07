@@ -9,7 +9,7 @@ assignees: ""
 <!--
 置換手順:
 1. ★ここに調査テーマ★: 調査テーマを置換する（例: esa Public API v1のレート制限挙動）
-2. <slug>: 成果物ファイル名用のkebab-caseに置換する（例: api-rate-limit）
+2. <issue-number> / <slug>: Issue 番号と成果物ファイル名用の kebab-case に置換する（例: 12-api-rate-limit）。Issue 番号が不明な場合は 00 とする
 3. <関連Issue/ADRのリンク>: 関連するIssueやADRのリンクに置換する（なければ「なし」）
 -->
 
@@ -18,7 +18,7 @@ assignees: ""
 ## 0. AI Agent 契約（最初に読む）
 
 - あなたは **AI調査Agent**。このIssue本文と「入力（SSOT参照セット）」のみで作業する。
-- **コード変更は禁止**。成果物はドキュメント（`docs/research/` または Issue/PRコメント）に限定する。
+- **コード変更は禁止**。成果物はドキュメント（`.github/copilot/90-research/` または Issue/PRコメント）に限定する。
 - **入力不足/矛盾** がある場合、調査を開始しない。
   - 代わりに `BLOCKER:` として不足点を列挙し、**差し戻し**を返す。
 - 調査結論は ADR または Requirements への昇格候補を必ず明記する（Designフェーズへの引き渡しが目的）。
@@ -35,6 +35,7 @@ assignees: ""
 ### 2.1 前提ドキュメント（必須）
 
 - `.github/copilot/00-index.md`
+- `AGENTS.md`（出力言語・レビュー方針）
 - `.github/copilot-instructions.md`
 - `.github/copilot/10-requirements.md`
 - `.github/copilot/20-architecture.md`
@@ -70,7 +71,7 @@ assignees: ""
 ## 5. 成果物
 
 - 調査結果を以下のいずれかにまとめ、PRを作成する（コード変更なし）:
-  - `docs/research/<slug>.md`（推奨）
+  - `.github/copilot/90-research/<issue-number>-<slug>.md`（推奨。命名規則は同ディレクトリの `index.md` に従う）
   - または本IssueコメントにまとめてPRなしで完結
 - **結論**には以下を必ず含める:
   - 各調査観点への回答

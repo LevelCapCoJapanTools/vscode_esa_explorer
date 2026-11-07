@@ -1,10 +1,7 @@
 ---
 name: Documentation rules
 description: Markdown ドキュメントに適用する実務ルール
-applyTo:
-  - "docs/**/*.md"
-  - "README.md"
-  - ".github/copilot/**/*.md"
+applyTo: "docs/**/*.md,README.md,.github/copilot/**/*.md"
 ---
 
 - 見出しは階層を崩さずに使用し、一覧・手順は箇条書きで簡潔にまとめる。

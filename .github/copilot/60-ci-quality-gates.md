@@ -4,10 +4,11 @@
 
 - **check**: `npm run check`（`typecheck` + `lint` + `format:check`）
 - **test**: `npm run compile` の後 `xvfb-run -a npm test`（`@vscode/test-cli` によるExtension Tests。Linux/CIにはディスプレイがないため `xvfb-run` を使用）
+- **security**: `npm run security`（`npm audit`。開発依存を含め、報告された脆弱性が 0 件で終了コード 0 の場合に成功。脆弱性検出・レジストリへの照会失敗は失敗として扱う）
 
 ## ローカルでの実行
 
-- PR作成前に `npm run verify`（`check` + `test`）を実行する。
+- PR作成前に `npm run verify`（`check` + `test` + `security`）を実行する。Linux/ヘッドレス環境では `xvfb-run -a npm run verify` を使用する。
 - VSIXパッケージングの動作確認は `npm run package:vsix`（`vsce package --out dist/esa-explorer.vsix`）。
 
 ## 運用ルール

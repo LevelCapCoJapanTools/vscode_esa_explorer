@@ -30,7 +30,7 @@ vscode_esa_explorer/          # repo root
 
 ## CI 運用
 
-- `npm run check`（typecheck / lint / format:check）と `npm test`（`xvfb-run -a npm test`）を単一ワークフロー（`.github/workflows/ci.yml`）で実行する。
+- `npm run check`（typecheck / lint / format:check）、`npm test`（`xvfb-run -a npm test`）、`npm run security`（`npm audit`）を単一ワークフロー（`.github/workflows/ci.yml`）で実行する。
 - パッケージが単一のため、ターゲット別トリガーやターゲットごとの独立 CI は現状不要。
 
 ## ポリレポへの切り替え

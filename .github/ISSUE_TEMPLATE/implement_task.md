@@ -23,7 +23,7 @@ assignees: ""
 ## 0. AI Agent 契約（最初に読む）
 
 - あなたは **AIコーディングAgent**。このIssue本文と「入力（SSOT参照セット）」のみで作業する。
-- **SSOTはplan**（確定planが最優先）。矛盾があれば **planを正** とする。
+- 共通入口は `.github/copilot/00-index.md`。確定 plan は実装の一次入力であり、上位 SSOT を上書きしない。矛盾時は同ファイルの優先順位に従い、DESIGN へ差し戻す。
 - **入力不足/矛盾/実装に必要な情報欠落** がある場合、実装を開始しない。
   - 代わりに `BLOCKER:` として不足点を列挙し、**DESIGNへ差し戻し**（plan修正依頼）を返す。
 - **plan外の仕様追加/推測補完は禁止**。
@@ -36,7 +36,7 @@ assignees: ""
 
 ## 2. 入力（SSOT参照セット）※ここが揃っていないと開始禁止
 
-### 2.1 確定plan（固定パス / 最優先）
+### 2.1 確定plan（固定パス / 実装の一次入力）
 
 - `.github/copilot/plans/<issue-number>-<slug>.md`
 
@@ -101,14 +101,16 @@ assignees: ""
 ## 8. アーキテクチャ制約（DI / レイヤ境界）
 
 - DI起点は `src/extension.ts` の `activate(context)` のみ
-- UI層（tree/commands）は `api/` の具象クライアントを直接importしない
-- Provider/Serviceは `api/` の型・エラー型のみに依存し、UI層をimportしない
+- 依存境界は `.github/copilot/20-architecture.md` に従う
+- 注入された `EsaApiClient` の型参照・公開メソッドの利用は許可する。UI/Provider 内でのクライアントの直接生成・HTTP 通信の実装は禁止する
 - esa Public API v1へのHTTP呼び出しは `src/api/` に閉じる
 - Extension Hostのイベントループをブロックする同期的重い処理を書かない
 - Personal Access Tokenは `context.secrets`（SecretStorage）以外に保存しない
 
 ## 9. 必読（規約/ゲート）
 
+- `.github/copilot/00-index.md`（参照順・矛盾時の扱い）
+- `AGENTS.md`（出力言語・レビュー方針）
 - `.github/copilot-instructions.md`
 - `.github/instructions/**/*.instructions.md`
 - `.github/copilot/30-coding-standards.md`
@@ -128,7 +130,7 @@ npm run compile
 npm test
 
 # 依存脆弱性スキャン
-npm audit
+npm run security
 ```
 
 ## 11. 作業ログ（AI Agentが残す最小記録）
@@ -143,7 +145,7 @@ npm audit
 
 - 成果物マニフェストの項目がすべて実装済み
 - 受入条件がすべて満たされる（テストで担保。planに従う）
-- CI品質ゲートがすべて緑（`npm run check` / `npm test` / `npm audit`）
+- CI品質ゲートがすべて緑（`npm run check` / `npm test` / `npm run security`）
 - ドキュメント更新は最小差分（planに従う）
 
 ## 13. BLOCKER（入力不足時の返却フォーマット）

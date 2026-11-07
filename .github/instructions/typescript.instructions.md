@@ -1,15 +1,15 @@
 ---
 name: TypeScript implementation rules
 description: src 配下のTypeScriptコードに適用する実務ルール
-applyTo:
-  - "src/**/*.ts"
+applyTo: "src/**/*.ts"
 ---
 
-- TypeScript は `tsconfig.json` の `module: Node16`（ESM）に従う。相対importには `.js` 拡張子を付ける（例: `import { EsaApiClient } from "../api/EsaApiClient.js"`）。
+- TypeScript は `tsconfig.json` の `module: Node16`（現設定では CommonJS）に従う。相対importには `.js` 拡張子を付ける（例: `import { EsaApiClient } from "../api/EsaApiClient.js"`）。
 - 型のみのimportは `import type` を使用する。`any` は使用しない。外部入力（APIレスポンス等）は `unknown` で受けて型ガード関数（`isEsaPost` 等）で絞り込む。
 - Secrets/トークン/PII をコード・ログ・テストデータに含めない。
 - 非同期処理は `async/await` を使用し、コールバックベースを避ける。エラーは例外として送出し、無視しない。APIエラーは `EsaApiError`（status/code/レート制限情報を含む構造化エラー）で表現する。
 - UI層（`tree/`, `commands/`）は表示・操作受付のみの責務を持ち、esa.io APIへのHTTP呼び出しの詳細を持たない。データアクセスは `api/EsaApiClient` に、状態管理は各Provider（`EsaPostTreeProvider` 等）に委ねる。
+- API クライアントの依存境界は `.github/copilot/20-architecture.md` を正とする。注入された `EsaApiClient` の型参照と公開メソッドの利用は許可し、UI/Provider 内での直接生成・HTTP 通信の実装は禁止する。
 - 副作用（ネットワーク/SecretStorage/ファイルI/O）はコンストラクタ引数または関数境界で受け渡し、テスト時に差し替えられる構造にする（例: `EsaApiClient` の `FetchFn` 型引数）。カテゴリツリー構築（`buildCategoryTree`）のようにvscode APIに依存しないロジックは純粋関数として切り出す。
 - Extension Hostのイベントループをブロックする同期的な重い処理を書かない。UI更新は `TreeDataProvider` の `onDidChangeTreeData` イベントで通知する。
 - パッケージ追加は最小限にし、npmで追加して `package.json` に反映する。

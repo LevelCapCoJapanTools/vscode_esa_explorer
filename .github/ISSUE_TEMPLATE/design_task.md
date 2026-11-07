@@ -37,6 +37,7 @@ assignees: ""
 ### 2.1 SSOT（必須）
 
 - `.github/copilot/00-index.md`
+- `AGENTS.md`（出力言語・レビュー方針）
 - `.github/copilot-instructions.md`
 - `.github/instructions/**/*.instructions.md`
 - `.github/copilot/10-requirements.md`
@@ -71,18 +72,18 @@ assignees: ""
 
 ### 4.1 レイヤ構造と依存方向
 
-| レイヤ              | 配置先                                                | 責務                          | 禁止依存                                       |
-| ------------------- | ----------------------------------------------------- | ----------------------------- | ---------------------------------------------- |
-| UI（tree/commands） | `src/tree/`, `src/commands/`                          | ユーザー操作の受付・表示      | `api/` の具象クライアントを直接importしない    |
-| Provider/Service    | `src/tree/`, `src/filesystem/`, `src/authentication/` | 状態管理・VS Code API連携     | UI層から呼ばれる公開メソッドのみを外部に見せる |
-| ApiClient           | `src/api/`                                            | esa Public API v1とのHTTP通信 | UI/Provider層をimportしない                    |
-| Model/Type          | `src/api/types.ts`                                    | データ構造（TypeScript型）    | 他レイヤに依存しない                           |
+| レイヤ              | 配置先                                                | 責務                          | 禁止依存                                           |
+| ------------------- | ----------------------------------------------------- | ----------------------------- | -------------------------------------------------- |
+| UI（tree/commands） | `src/tree/`, `src/commands/`                          | ユーザー操作の受付・表示      | `EsaApiClient` の直接生成・HTTP 通信の実装をしない |
+| Provider/Service    | `src/tree/`, `src/filesystem/`, `src/authentication/` | 状態管理・VS Code API連携     | コマンド登録関数に依存しない                       |
+| ApiClient           | `src/api/`                                            | esa Public API v1とのHTTP通信 | UI/Provider層をimportしない                        |
+| Model/Type          | `src/api/types.ts`                                    | データ構造（TypeScript型）    | 他レイヤに依存しない                               |
 
 ### 4.2 依存の組み立て（DI）方針
 
 - DI起点は `src/extension.ts` の `activate(context)` のみ
   - `EsaApiClient` / `CredentialService` / `PostCache` 等を `activate()` 内で生成し、コンストラクタ引数として注入する
-- UI層はProvider/Serviceの公開メソッドに依存し、`api/` の具象クライアントを直接importしない
+- 依存境界は `.github/copilot/20-architecture.md` を正とする。UI/Provider は注入された API クライアントの型参照と公開メソッドの利用が可能であり、直接生成・HTTP 通信の実装は禁止する
 
 ### 4.3 esa Public API v1連携時の規約
 
@@ -104,7 +105,7 @@ assignees: ""
 2. UI/Provider・Service/ApiClientの責務分離がplanに明記されている
 3. DI経路（`extension.ts activate() -> Provider/コマンド`）がplanに明記されている
 4. テスト計画（`@vscode/test-cli` / Mocha）がplanに明記されている
-5. CI品質ゲート（typecheck / lint / format:check / test）の実行計画がplanに明記されている
+5. CI品質ゲート（typecheck / lint / format:check / test / security）の実行計画がplanに明記されている
 
 ## 6. 品質ゲート（planに必ず記載する項目）
 
@@ -112,7 +113,7 @@ assignees: ""
 - `lint`: `npm run lint`
 - `format`: `npm run format:check`
 - `test`: `npm test`（`xvfb-run -a npm test`）
-- `security`: `npm audit`
+- `security`: `npm run security`
 - planにDI経路が `extension.ts activate() -> Provider/コマンド` で固定されていること
 - planにレイヤ境界（UI/Provider・Service/ApiClient）がテスト可能な受入条件で固定されていること
 - planにPersonal Access TokenがSecretStorage以外に保存されないことの受入条件があること

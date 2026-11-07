@@ -54,6 +54,8 @@ Personal Access Token は VS Code の SecretStorage にのみ保存され、ロ�
 
 ## 開発
 
+Codex・Claude Code・GitHub Copilot の共通 SSOT は [.github/copilot/00-index.md](.github/copilot/00-index.md) を入口とします。出力言語・レビュー方針は [AGENTS.md](AGENTS.md) を参照してください。
+
 開発手順は [docs/development.md](docs/development.md) を参照してください。アーキテクチャは [docs/architecture.md](docs/architecture.md) にまとめています。
 
 ## ライセンス

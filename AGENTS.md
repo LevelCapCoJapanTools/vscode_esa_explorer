@@ -2,6 +2,10 @@
 
 このドキュメントは、**エージェントの振る舞い・出力言語・レビュー方針に限定した行動規範**を定義します。設計・実装・運用ルールの SSOT は `.github/copilot/00-index.md` を起点とする `.github/copilot/` 配下のドキュメント群です。
 
+## 共通の入口
+
+Codex・Claude Code・GitHub Copilot は、作業開始時に必ず [共通入口 `.github/copilot/00-index.md`](.github/copilot/00-index.md) を読み、そこで定義された参照順に従うこと。エージェント別の入口と読み込み方法も同ファイルを正とし、本ファイルに独自の技術仕様・参照順を追加しない。
+
 ## 基本方針
 
 - 本リポジトリでは `.github/copilot/` を **設計・実装・運用ルールの SSOT** として扱う。
@@ -14,13 +18,8 @@
 
 ## 実装ガイドライン
 
-- 実装時は以下の SSOT を参照すること：
-
-  - `.github/copilot-instructions.md`
-  - `.github/instructions/**/*.instructions.md`
-  - `.github/copilot/10-requirements.md` から `.github/copilot/60-ci-quality-gates.md` までの関連ファイル
-
-- CI は必ず成功させること（lint / typecheck / test / security）。
+- 実装ルール・品質ゲートは、共通入口の参照順で確認すること。
+- CI は必ず成功させること（lint / typecheck / test / security）。実行方法と合否基準は [60-ci-quality-gates.md](.github/copilot/60-ci-quality-gates.md) に従うこと。
 
 ## レビューガイドライン
 

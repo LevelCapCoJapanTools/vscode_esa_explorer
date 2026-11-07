@@ -1,6 +1,7 @@
-# Copilot 規範層（全タスク共通で短く強い指示）
+# エージェント共通規範（Codex / Claude Code / GitHub Copilot）
 
-- 仕様の入口は `.github/copilot/00-index.md`。参照順に従い、設計→実装の2段階ループを厳守する。
+- 作業開始時に必ず [共通入口 `.github/copilot/00-index.md`](copilot/00-index.md) を読む。参照順に従い、設計→実装の2段階ループを厳守する。
+- 出力言語・レビュー形式・コミュニケーション方針は [AGENTS.md](../AGENTS.md) を読み、従う。共通入口と振る舞い規範は、利用する Copilot 機能での自動読み込みの有無にかかわらず確認する。
 - PR種別に応じて以下テンプレートを必ず使用する：
   - DESIGN PR → [.github/PULL_REQUEST_TEMPLATE/design.md](PULL_REQUEST_TEMPLATE/design.md)
   - IMPLEMENT PR → [.github/PULL_REQUEST_TEMPLATE/implement.md](PULL_REQUEST_TEMPLATE/implement.md)

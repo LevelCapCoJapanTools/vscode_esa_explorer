@@ -12,7 +12,7 @@
 - [ ] `npm run typecheck` が成功
 - [ ] `npm run compile` が成功
 - [ ] `npm test`（`vscode-test`）が PASS
-- [ ] `npm audit` で脆弱性がない（または許容済みの根拠を記載）
+- [ ] `npm run security`（`npm audit`）が成功し、報告された脆弱性がない
 - [ ] UI層（tree/commands）は `api/` の具象クライアントを直接 `new` していない
 - [ ] Extension Hostのイベントループをブロックする同期的重い処理を追加していない（外部I/Oは`async/await`）
 - [ ] Secrets/PII（Personal Access Token等の実値）がコード・ログ・テストデータに含まれていない

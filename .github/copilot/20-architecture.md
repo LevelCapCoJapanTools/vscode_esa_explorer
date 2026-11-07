@@ -1,16 +1,16 @@
-# 20 Architecture — 二層構造と開発ループ
+# 20 Architecture — 共通ルールと開発ループ
 
 ## 二層構造
 
 - **規範層**: `.github/copilot-instructions.md` — 短く強いルール。全タスク共通。
 - **仕様層 (SSOT)**: `.github/copilot/*.md` — 要件・設計・品質・セキュリティの単一情報源。
-- **実行指示レイヤ**: `.github/instructions/**/*.instructions.md` — `applyTo` で対象ファイルに適用される補助的な設計/背景資料レイヤ。
+- **実行指示レイヤ**: `.github/instructions/**/*.instructions.md` — `applyTo` が対象パスを示す実務ルール。エージェント別の読み方は `00-index.md` に従う。
 
 ## 開発フロー（2段階ループ）
 
 ```mermaid
 flowchart TD
-  A["Copilot Agent"] --> B["設計出力 (implementation-plan.md)"]
+  A["Codex / Claude Code / GitHub Copilot"] --> B["設計出力 (implementation-plan.md)"]
   B --> C["人間レビュー（設計）"]
   C --> D["実装"]
   D --> E["CI品質ゲート (lint/test/security)"]
@@ -33,6 +33,7 @@ flowchart TD
 - PRテンプレートは「人間レビューのための説明」を記録する。
 - `80-templates/implementation-plan.md` は「設計Agentから製造Agentへの実装仕様引き渡し」を記録する。
 - IMPLEMENT フェーズでは、確定 plan Markdown を一次入力として実装し、プロンプトに仕様全文の再記載を要求しない。
+- plan と上位 SSOT の矛盾時は `00-index.md` の優先順位に従い、DESIGN へ差し戻す。
 
 ## 依存と適用範囲
 
@@ -73,9 +74,22 @@ extension.ts (エントリポイント / activate()がDIルート)
 - `context.subscriptions` に登録した `Disposable` はVS Codeが拡張機能の非activate時に破棄する。手動でのクリーンアップコードは書かない。
 - コマンドハンドラは `commands/registerXxxCommand(context, ...)` の形で登録関数を分離し、`extension.ts` を薄く保つ。
 
+## 依存境界
+
+| 責務                       | 対象                                                    | 許可する依存・操作                                                                           | 禁止する依存・操作                                                   |
+| -------------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| 表示・操作受付             | `tree/EsaTreeItem.ts`、`commands/`                      | 注入された Provider・Service・API クライアント・キャッシュの公開メソッド、API の型・エラー型 | `EsaApiClient` の直接生成、HTTP 通信の実装                           |
+| 状態管理・VS Code API 連携 | `EsaPostTreeProvider`、`filesystem/`、`authentication/` | 注入された API クライアント・キャッシュ・認証サービス、VS Code API                           | `EsaApiClient` の直接生成、HTTP 通信の実装、コマンド登録関数への依存 |
+| HTTP 通信                  | `api/`                                                  | `fetch`、API の型・エラー型                                                                  | UI・Provider・Service への依存                                       |
+| データ構造                 | `api/types.ts`                                          | 型定義                                                                                       | UI・Provider・Service への依存                                       |
+
+- `EsaApiClient` の型を `import type` で参照し、注入されたインスタンスの公開メソッドを呼ぶことは許可する。UI/Provider 内でクライアントを `new` することや、HTTP の詳細を実装することとは区別する。
+- `tree/` は TreeItem と Provider の両方を含むため、ディレクトリ名だけで依存を判定せず、上表の責務に従う。
+- テンプレートではこの境界を参照し、別の依存禁止ルールを追加しない。
+
 ## データフロー
 
-1. `configure` コマンドでチーム名とトークンを入力し、`CredentialService.checkConnection` で接続確認後に `SecretStorage` へ保存する。
+1. `configure` コマンドでチーム名とトークンを入力し、`CredentialService` が `EsaApiClient.checkConnection` で接続確認後に `SecretStorage` へ保存する。
 2. Tree View 表示時に `EsaApiClient.listAllPosts` で全記事を取得し、`buildCategoryTree`（純粋関数）でカテゴリ階層を構築する。
 3. 記事を開くと `esa://<team>/posts/<number>.md` を `vscode.workspace.openTextDocument` で開き、`EsaFileSystemProvider.readFile` が本文を返す。
 4. 保存時は `EsaFileSystemProvider.writeFile` が `original_revision` 付きで `EsaApiClient.updatePost` を呼び、3-way mergeに対応する。
@@ -86,6 +100,6 @@ extension.ts (エントリポイント / activate()がDIルート)
 - 設計と実装の Issue は分離し、設計 Issue はドキュメントのみの PR、実装 Issue は確定 plan のパスを明示してその範囲に限定する。
 - 設計 Issue の plan では、設計行為そのものをゴール/要件にしない。実装で変化する機能/コマンド/API/データ契約のみを対象化する。
 - 設計 Issue の要件は、実装後に観測できる受入条件（テスト可能）で固定し、実装 Issue ではその plan Markdown を一次入力として実装する。
-- 不確実性解消のために **[RESEARCH]** Issue を設け、コード変更禁止を基本とする（成果物は docs/research や Issue/PR コメントに集約し、結論は ADR/Requirements へ昇格させてから Design に渡す）。
+- 不確実性解消のために **[RESEARCH]** Issue を設け、コード変更禁止を基本とする（成果物は `.github/copilot/90-research/<issue-number>-<slug>.md` または Issue/PR コメントに集約し、結論は ADR/Requirements へ昇格させてから Design に渡す）。命名規則は [90-research/index.md](90-research/index.md) に従う。
 - 仕様参照を避けたい場合は、任意フェーズの Issue に付与できるモディファイアとして **[BLIND]** を用いる。本文に必要情報を埋め込み、参照禁止範囲と変更可否を明示する。成果物は最小差分かつ本文完結とする。
 - 推奨する最小セット: `[RESEARCH]`（調査のみ）、`[DESIGN]`（plan確定）、`[IMPLEMENT]`（plan通り実装）、`[BLIND]`（任意フェーズに付与可能な仕様参照抑制モディファイア）。

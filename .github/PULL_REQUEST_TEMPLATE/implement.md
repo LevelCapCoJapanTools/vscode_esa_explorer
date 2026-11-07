@@ -57,7 +57,7 @@ diffの目次（ファイル×変更概要）を下記のテーブルに記載�
 | unit/integration | <<target>>            | npm test（vscode-test） | <<result>> | <<evidence>>       |
 | typecheck        | <<target>>            | npm run typecheck       | <<result>> | <<evidence>>       |
 | lint             | <<target>>            | npm run lint            | <<result>> | <<evidence>>       |
-| security         | <<target>>            | npm audit               | <<result>> | <<evidence>>       |
+| security         | <<target>>            | npm run security        | <<result>> | <<evidence>>       |
 
 ## エラーハンドリング・境界値の考慮事項（Error Handling / Boundary Conditions）
 

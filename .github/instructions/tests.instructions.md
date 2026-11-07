@@ -1,8 +1,7 @@
 ---
 name: Tests rules
 description: テストコードに適用する実務ルール
-applyTo:
-  - "src/test/**/*.ts"
+applyTo: "src/test/**/*.ts"
 ---
 
 - `@vscode/test-cli`（`.vscode-test.mjs`）を前提とし、ファイル名は `*.test.ts`、テストはMochaの `suite`/`test` で記述する。

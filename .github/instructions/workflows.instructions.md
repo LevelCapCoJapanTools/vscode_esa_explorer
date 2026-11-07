@@ -1,9 +1,7 @@
 ---
 name: Workflows rules
 description: GitHub Actions ワークフローの実務ルール
-applyTo:
-  - ".github/workflows/**/*.yml"
-  - ".github/workflows/**/*.yaml"
+applyTo: ".github/workflows/**/*.yml,.github/workflows/**/*.yaml"
 ---
 
 - 最小権限の `permissions` を明示し、Secrets は必要最小限で参照する。ログに Secrets/PII を出さない。

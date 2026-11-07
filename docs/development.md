@@ -26,7 +26,8 @@ npm install
 | `npm run format:check` | 整形チェック                    |
 | `npm run check`        | typecheck + lint + format:check |
 | `npm test`             | ビルド後に拡張機能テストを実行  |
-| `npm run verify`       | check + test                    |
+| `npm run security`     | 開発依存を含む npm audit        |
+| `npm run verify`       | check + test + security         |
 
 ## デバッグ
 
@@ -45,7 +46,20 @@ VS Code で「Run Extension」構成を起動すると、拡張機能開発ホ�
 
 テストは `@vscode/test-cli`（`.vscode-test.mjs`）で `out/test/**/*.test.js` を実行します。Linux環境では `xvfb-run -a npm test` を使用してください。
 
+VS Code のテスト対象は `package.json` の `engines.vscode` に記載した最低対応版です。別バージョンの確認には `npm test -- --code-version <version>` を使用します。品質ゲートの合否基準は [60-ci-quality-gates.md](../.github/copilot/60-ci-quality-gates.md) を参照してください。
+
 ## 検証結果
+
+### 2026-11-07（macOS arm64 / Node.js 22.23.4）
+
+| コマンド               | 結果                                                                                                                        |
+| ---------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `npm run verify`       | 成功。typecheck・lint・format:check、VS Code 1.105.0 上の既存テスト 39 件、security がすべて通過。npm audit は脆弱性 0 件。 |
+| `npm run package:vsix` | 成功。`dist/esa-explorer.vsix` を生成。                                                                                     |
+
+共通入口・Claude import・パス別ルールのメタ情報・CI ジョブ・テスト版数の整合も確認しました。GitHub 上の CI 実行とブランチ保護設定は、このローカル検証には含みません。
+
+### 2026-08-07
 
 2026-08-07に以下を実行しました。
 

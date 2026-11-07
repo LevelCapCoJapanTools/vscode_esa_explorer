@@ -2,7 +2,8 @@
 
 - `.github/instructions/**/*.instructions.md` のパス別ルールを優先する。
 - 互換性維持をデフォルトとし、破壊的変更は移行策・理由を plan / ADR に記載する。
-- TypeScript は `tsconfig.json` の `module: Node16`（ESM）に従う。相対importには `.js` 拡張子を付ける（例: `import { EsaApiClient } from "./api/EsaApiClient.js"`）。型のみのimportは `import type` を使用する。
+- TypeScript は `tsconfig.json` の `module: Node16`（現設定では CommonJS）に従う。相対importには `.js` 拡張子を付ける（例: `import { EsaApiClient } from "./api/EsaApiClient.js"`）。型のみのimportは `import type` を使用する。
+- `Node16` だけで ESM と決まるわけではない。現在の `package.json` は `type` 未指定のため、`.ts` は CommonJS と判定される。
 - `any` は使用しない。外部入力（APIレスポンス等）は `unknown` を受け取り、型ガード関数（`isEsaPost` 等）で絞り込む。
 - VS Code拡張の責務分離: `extension.ts` をDIルート/コマンド登録の起点とし、`api/`（HTTPクライアント）・`authentication/`（SecretStorage）・`cache/`・`filesystem/`（FileSystemProvider）・`tree/`（TreeDataProvider）・`commands/`・`logging/` にモジュールを分離する。UI表示に関わるロジック（Tree構築等）は `tree/CategoryTree.ts` のように可能な限り純粋関数として切り出す。
 - 非同期処理は `async/await` を使用し、コールバックベースを避ける。エラーは例外として送出し、無視しない。APIエラーは `EsaApiError`（status/code/レート制限情報を含む構造化エラー）で表現する。

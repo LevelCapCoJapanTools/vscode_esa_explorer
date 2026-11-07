@@ -1,8 +1,7 @@
 ---
 name: Commit message rules
-description: Copilot エージェントが生成するコミットメッセージの構造ルール
-applyTo:
-  - "commit messages"
+description: Codex・Claude Code・GitHub Copilot が生成するコミットメッセージの構造ルール
+applyTo: "commit messages"
 ---
 
 - コミットメッセージは日本語で書き、必要に応じて括弧書きで簡潔な英訳を添える。

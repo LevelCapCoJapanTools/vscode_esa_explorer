@@ -1,9 +1,7 @@
 ---
 name: Mermaid diagram rules
 description: Markdown ファイル内の Mermaid 図を書くときの実務ルール
-applyTo:
-  - "docs/**/*.md"
-  - ".github/**/*.md"
+applyTo: "docs/**/*.md,.github/**/*.md"
 ---
 
 ## Mermaid 図の記述ルール

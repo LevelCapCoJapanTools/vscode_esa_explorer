@@ -3,7 +3,7 @@
 - Secrets/PII をコード・ログ・ドキュメントに出さない。ダミー値やマスキングを使用する。
 - 入力値・設定値・外部レスポンス（esa.io API）は必ず検証し、想定外は例外として明示的に失敗させる（型ガード関数で真偽判定してから使用する）。
 - ログは構造化し、エラー原因を追える粒度で `logging/ExtensionLogger.ts`（OutputChannelラッパー）経由で記録するが、Personal Access Token等の機密情報は含めない。
-- 依存追加時は `npm audit` 等で脆弱性を確認し、不要な権限・スコープを避ける。
+- 依存追加時および CI では `npm run security`（`npm audit`）で開発依存を含む脆弱性を確認し、不要な権限・スコープを避ける。合否基準は `60-ci-quality-gates.md` に従う。
 - CI でも Secrets を最小権限で扱い、書き込み権限が不要な場合は `permissions: contents: read` を基本とする（`.github/workflows/ci.yml` 参照）。
 - Personal Access Token（esa.io Personal Access Token v2）は VS Code の `SecretStorage`（`context.secrets`）にのみ保存し、`globalState`・設定ファイル・ログに書き込まない（`authentication/CredentialService.ts`）。
 - `Authorization` ヘッダーは API 呼び出し直前にのみ組み立てる。トークンをモジュールスコープの変数やグローバル状態に長期保持しない。

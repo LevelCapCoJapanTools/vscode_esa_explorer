@@ -5,6 +5,10 @@
   "version": "0.1.0",
   "publisher": "local",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LevelCapCoJapanTools/vscode_esa_explorer.git"
+  },
   "main": "./out/extension.js",
   "categories": [
     "Other"
@@ -143,8 +147,9 @@
     "format:check": "prettier --check .",
     "test": "npm run compile && vscode-test",
     "check": "npm run typecheck && npm run lint && npm run format:check",
-    "verify": "npm run check && npm test",
-    "package:vsix": "vsce package --out dist/esa-explorer.vsix"
+    "security": "npm audit",
+    "verify": "npm run check && npm test && npm run security",
+    "package:vsix": "node -e \"require('node:fs').mkdirSync('dist', { recursive: true })\" && vsce package --out dist/esa-explorer.vsix"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",
