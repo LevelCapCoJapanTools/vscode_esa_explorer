@@ -6,7 +6,7 @@ import type { PostCache } from "../cache/PostCache.js";
 import type { ExtensionLogger } from "../logging/ExtensionLogger.js";
 import type { EsaDraftManager } from "../draft/EsaDraftManager.js";
 import type { EsaPostTreeProvider } from "../tree/EsaPostTreeProvider.js";
-import { buildEsaUri, parseEsaUri } from "./EsaUri.js";
+import { buildEsaUri } from "./EsaUri.js";
 import { parseDraftUri } from "./EsaDraftUri.js";
 
 export class EsaDraftFileSystemProvider
@@ -41,8 +41,6 @@ export class EsaDraftFileSystemProvider
       ctime: now,
       mtime: now,
       size: Buffer.byteLength(body, "utf8"),
-      // teamName/id kept for API-level serialization only.
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       ...(teamName && { teamName }),
       ...(id && { id }),
     } as vscode.FileStat;
@@ -64,7 +62,7 @@ export class EsaDraftFileSystemProvider
   async writeFile(
     uri: vscode.Uri,
     content: Uint8Array,
-    options: { readonly create: boolean; readonly overwrite: boolean },
+    _options: { readonly create: boolean; readonly overwrite: boolean },
   ): Promise<void> {
     const { teamName, id } = parseDraftUri(uri);
     const key = uri.toString();
