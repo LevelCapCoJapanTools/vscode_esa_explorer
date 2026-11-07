@@ -57,6 +57,7 @@ Draft issueを使う理由は、リポジトリのIssueトラッカーを、ま�
    `gh project item-create`には`gh issue create`にある`--body-file`が無く、本文は`--body`の文字列引数でしか渡せない。テンプレート由来の長い複数行本文をそのまま引数に埋め込むとクォート崩れの原因になりやすいため、一時ファイルに書き出してから`--body "$(cat <<'EOF' ... EOF)"`のようにコマンド置換で渡す、または本文をヒアドキュメントで変数に入れてから渡すとよい。
 
    このコマンドが返す`id`（`PVTI_...`形式のプロジェクト項目ID）は、あとでこのDraft issueの本文を編集する際にはそのまま使えない（`gh project item-edit`はDraft issue自体のID、`DI_...`形式を要求する）。無理に控えておく必要はなく、あとで編集が必要になったらステップ4の手順でタイトルから探し直せばよい。
+
 3. Draft issueにはラベル・assigneesを設定できない（`gh project item-create`にもそのためのオプションは無い）。フェーズは手順2で組み立てたタイトルのプレフィックスと本文で表現済みなので、それ以上の対応は不要。
 4. **`config/project.json` が存在しない場合**、値を推測したり、以前の会話で聞いた別プロジェクトの値を流用したりしない。人間に次のように尋ねる：「このリポジトリの作業をどのGitHub Projectに登録しますか？（Organization/ユーザー名とプロジェクト番号、またはプロジェクトのURL）」。回答をもとに `config/project.json` を新規作成する（フォーマットは `config/README.md` と `config/project.json.example` を参照）。以降はこのファイルを読むだけでよく、毎回聞き直さない。
 5. `gh project item-create`は`project`スコープ（書き込み）を要求する。`gh auth status`のtoken scopesに`project`が無い場合は権限エラーで失敗する。この場合、自己判断でスコープを昇格させようとしない（`gh auth refresh`はブラウザでの再認可を伴う人間の操作のため代行できない）。人間に「`gh auth refresh -s project`を実行してください」と伝えたうえで、実行後に同じコマンドを再試行する。

@@ -2,9 +2,11 @@
 
 ## 前提
 
-- Node.js（`.nvmrc` 参照。推奨: 20）
+- Node.js（`.nvmrc` 参照。開発・CI 共通）
 - npm
 - Visual Studio Code（`^1.105.0`）
+
+開発ツールの推移依存が Node.js 22 以上を要求するため、開発環境も CI と同じ `.nvmrc` のバージョンを使用してください。
 
 ## セットアップ
 
