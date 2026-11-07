@@ -1,5 +1,4 @@
 {
-  "enabled": true,
   "owner": "your-org-or-user",
   "projectNumber": 1,
   "projectName": "Human-readable project name (for logging only, not used programmatically)"
