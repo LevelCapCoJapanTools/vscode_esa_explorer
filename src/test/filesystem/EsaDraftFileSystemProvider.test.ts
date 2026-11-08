@@ -171,6 +171,7 @@ suite("EsaDraftFileSystemProvider", () => {
     assert.strictEqual(fixture.ui.closedTabs.length, 0);
     assert.ok(fixture.draftManager.get(DRAFT_URI));
     assert.strictEqual(fixture.ui.errorMessages.length, 1);
+    assert.strictEqual(fixture.refreshCalls, 0);
   });
 
   test("tabGroups.closeがfalseのときはDraftを保持して通知する", async () => {
@@ -197,6 +198,7 @@ suite("EsaDraftFileSystemProvider", () => {
 
     assert.strictEqual(fixture.ui.closedTabs.length, 0);
     assert.ok(fixture.draftManager.get(DRAFT_URI));
+    assert.strictEqual(fixture.refreshCalls, 1);
   });
 
   test("Draftタブ未検出時は通知せずにDraft状態を破棄する", async () => {

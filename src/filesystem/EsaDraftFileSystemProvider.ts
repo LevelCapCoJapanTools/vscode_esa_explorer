@@ -188,6 +188,7 @@ export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vs
         existingDraft.promotedPostNumber = post.number;
         existingDraft.promotedRevisionNumber = post.revision_number;
         existingDraft.promotedBodyDigest = post.body_md;
+        this.refreshTree();
 
         const remoteUri = buildEsaUri(teamName, post.number);
         const doc = await this.ui.openTextDocument(remoteUri);
@@ -229,6 +230,9 @@ export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vs
     }
     this.draftManager.delete(draftUri);
     this._onDidChangeFile.fire([{ type: vscode.FileChangeType.Changed, uri: draftUri }]);
+  }
+
+  private refreshTree(): void {
     this.getTreeProvider()
       ?.refresh()
       .catch((e: unknown) => {
