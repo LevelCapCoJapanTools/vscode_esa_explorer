@@ -5,6 +5,21 @@ export interface EsaUser {
   icon: string;
 }
 
+export interface CreatePostInput {
+  name: string;
+  bodyMd?: string;
+  category?: string | null;
+  wip?: boolean;
+  tags?: string[];
+  message?: string;
+}
+
+export interface EsaAuthenticatedUser {
+  id: number;
+  name: string;
+  screen_name: string;
+}
+
 export interface EsaPost {
   number: number;
   name: string;

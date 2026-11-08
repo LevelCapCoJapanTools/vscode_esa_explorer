@@ -9,7 +9,15 @@ import { registerConfigureCommand } from "./commands/configureCommand.js";
 import { registerRefreshPostsCommand } from "./commands/refreshPostsCommand.js";
 import { registerOpenPostCommand } from "./commands/openPostCommand.js";
 import { registerOpenInBrowserCommand } from "./commands/openInBrowserCommand.js";
-import { CONTEXT_IS_CONFIGURED, ESA_URI_SCHEME, TREE_VIEW_ID } from "./constants.js";
+import { registerCreateDraftCommand } from "./commands/createDraftCommand.js";
+import { EsaDraftManager } from "./draft/EsaDraftManager.js";
+import { EsaDraftFileSystemProvider } from "./filesystem/EsaDraftFileSystemProvider.js";
+import {
+  CONTEXT_IS_CONFIGURED,
+  ESA_DRAFT_URI_SCHEME,
+  ESA_URI_SCHEME,
+  TREE_VIEW_ID,
+} from "./constants.js";
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const logger = new ExtensionLogger();
@@ -32,9 +40,24 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   );
   context.subscriptions.push(fsProvider);
 
+  const draftManager = new EsaDraftManager();
+  const draftFsProvider = new EsaDraftFileSystemProvider(
+    cache,
+    apiClient,
+    credentialService,
+    logger,
+    draftManager,
+    () => treeProvider,
+  );
+  context.subscriptions.push(draftFsProvider);
+
   // Register FileSystemProvider
   context.subscriptions.push(
     vscode.workspace.registerFileSystemProvider(ESA_URI_SCHEME, fsProvider, {
+      isCaseSensitive: true,
+      isReadonly: false,
+    }),
+    vscode.workspace.registerFileSystemProvider(ESA_DRAFT_URI_SCHEME, draftFsProvider, {
       isCaseSensitive: true,
       isReadonly: false,
     }),
@@ -52,6 +75,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   registerRefreshPostsCommand(context, treeProvider);
   registerOpenPostCommand(context, apiClient, cache, credentialService, logger);
   registerOpenInBrowserCommand(context);
+  registerCreateDraftCommand(context, draftManager);
 
   // Additional commands
   context.subscriptions.push(

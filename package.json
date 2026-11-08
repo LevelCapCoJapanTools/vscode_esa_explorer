@@ -33,8 +33,11 @@
   "activationEvents": [
     "onView:esaExplorer.posts",
     "onFileSystem:esa",
+    "onFileSystem:esa-draft",
     "onCommand:esaExplorer.configure",
-    "onCommand:esaExplorer.openPost"
+    "onCommand:esaExplorer.openPost",
+    "onCommand:esaExplorer.createDraft",
+    "onCommand:esaExplorer.createDraftHere"
   ],
   "contributes": {
     "viewsContainers": {
@@ -90,12 +93,27 @@
         "command": "esaExplorer.showOutput",
         "title": "出力を表示",
         "category": "esa Explorer"
+      },
+      {
+        "command": "esaExplorer.createDraft",
+        "title": "新規記事",
+        "category": "esa Explorer"
+      },
+      {
+        "command": "esaExplorer.createDraftHere",
+        "title": "新規記事（ここに作成）",
+        "category": "esa Explorer"
       }
     ],
     "menus": {
       "view/title": [
         {
           "command": "esaExplorer.refreshPosts",
+          "when": "view == esaExplorer.posts",
+          "group": "navigation"
+        },
+        {
+          "command": "esaExplorer.createDraft",
           "when": "view == esaExplorer.posts",
           "group": "navigation"
         },
@@ -115,6 +133,11 @@
           "command": "esaExplorer.openInBrowser",
           "when": "viewItem == esaPost",
           "group": "navigation@2"
+        },
+        {
+          "command": "esaExplorer.createDraftHere",
+          "when": "viewItem == esaCategory",
+          "group": "inline"
         }
       ]
     },

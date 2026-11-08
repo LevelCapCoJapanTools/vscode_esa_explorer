@@ -21,6 +21,8 @@ suite("Extension Integration Tests", () => {
       "esaExplorer.openPost",
       "esaExplorer.openInBrowser",
       "esaExplorer.showOutput",
+      "esaExplorer.createDraft",
+      "esaExplorer.createDraftHere",
     ];
     for (const cmd of expectedCommands) {
       assert.ok(commands.includes(cmd), `コマンド ${cmd} が登録されていません`);

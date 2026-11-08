@@ -1,6 +1,12 @@
 import { API_BASE_URL, API_PER_PAGE, API_TIMEOUT_MS } from "../constants.js";
 import { EsaApiError } from "./EsaApiError.js";
-import type { EsaPost, EsaPostsResponse, UpdatePostInput } from "./types.js";
+import type {
+  CreatePostInput,
+  EsaAuthenticatedUser,
+  EsaPost,
+  EsaPostsResponse,
+  UpdatePostInput,
+} from "./types.js";
 
 export type FetchFn = typeof fetch;
 
@@ -58,6 +64,17 @@ function isEsaPostsResponse(value: unknown): value is EsaPostsResponse {
     Array.isArray(v["posts"]) &&
     (v["next_page"] === null || typeof v["next_page"] === "number") &&
     (v["prev_page"] === null || typeof v["prev_page"] === "number")
+  );
+}
+
+function isEsaAuthenticatedUser(value: unknown): value is EsaAuthenticatedUser {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v["id"] === "number" &&
+    typeof v["name"] === "string" &&
+    typeof v["screen_name"] === "string" &&
+    v["screen_name"] !== ""
   );
 }
 
@@ -207,6 +224,36 @@ export class EsaApiClient {
 
     if (!isEsaPost(data)) {
       throw new EsaApiError("esa APIからの記事レスポンスの形式が不正です。");
+    }
+    return data;
+  }
+
+  async createPost(teamName: string, input: CreatePostInput, token: string): Promise<EsaPost> {
+    const path = `/teams/${encodeURIComponent(teamName)}/posts`;
+    const requestBody = {
+      post: {
+        name: input.name,
+        body_md: input.bodyMd ?? "",
+        category: input.category ?? null,
+        wip: input.wip ?? true,
+        tags: input.tags ?? [],
+        message: input.message ?? "Created from VS Code",
+      },
+    };
+    const data = await this.request<unknown>(token, "POST", path, requestBody);
+
+    if (!isEsaPost(data)) {
+      throw new EsaApiError("esa APIからの記事作成レスポンスの形式が不正です。");
+    }
+    return data;
+  }
+
+  async getAuthenticatedUser(token: string): Promise<EsaAuthenticatedUser> {
+    const path = "/user";
+    const data = await this.request<unknown>(token, "GET", path);
+
+    if (!isEsaAuthenticatedUser(data)) {
+      throw new EsaApiError("esa APIからのユーザー情報の形式が不正です。");
     }
     return data;
   }
