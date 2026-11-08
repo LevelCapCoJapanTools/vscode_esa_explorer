@@ -28,6 +28,42 @@ export function getDocumentReplaceRange(document: vscode.TextDocument): vscode.R
   return new vscode.Range(new vscode.Position(0, 0), new vscode.Position(document.lineCount, 0));
 }
 
+export interface DraftEditorUiAdapter {
+  openTextDocument(uri: vscode.Uri): Thenable<vscode.TextDocument>;
+  showTextDocument(
+    document: vscode.TextDocument,
+    options?: vscode.TextDocumentShowOptions,
+  ): Thenable<vscode.TextEditor>;
+  applyEdit(edit: vscode.WorkspaceEdit): Thenable<boolean>;
+  onDidSaveTextDocument(listener: (document: vscode.TextDocument) => void): vscode.Disposable;
+  getAllTabGroups(): readonly vscode.TabGroup[];
+  closeTab(tab: vscode.Tab): Thenable<boolean>;
+  showErrorMessage(message: string): Thenable<string | undefined>;
+}
+
+function createDraftEditorUiAdapter(): DraftEditorUiAdapter {
+  return {
+    openTextDocument: (uri) => vscode.workspace.openTextDocument(uri),
+    showTextDocument: (document, options) => vscode.window.showTextDocument(document, options),
+    applyEdit: (edit) => vscode.workspace.applyEdit(edit),
+    onDidSaveTextDocument: (listener) => vscode.workspace.onDidSaveTextDocument(listener),
+    getAllTabGroups: () => vscode.window.tabGroups.all,
+    closeTab: (tab) => vscode.window.tabGroups.close(tab),
+    showErrorMessage: (message) => vscode.window.showErrorMessage(message),
+  };
+}
+
+function getTabInputUri(input: unknown): vscode.Uri | undefined {
+  if (input instanceof vscode.TabInputText) {
+    return input.uri;
+  }
+  if (typeof input !== "object" || input === null || !("uri" in input)) {
+    return undefined;
+  }
+  const uri = (input as { uri: unknown }).uri;
+  return uri instanceof vscode.Uri ? uri : undefined;
+}
+
 export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vscode.Disposable {
   private readonly draftBodies = new Map<string, Uint8Array>();
   private readonly _onDidChangeFile = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
@@ -40,6 +76,7 @@ export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vs
     private readonly logger: ExtensionLogger,
     private readonly draftManager: EsaDraftManager,
     private readonly getTreeProvider: () => EsaPostTreeProvider | undefined,
+    private readonly ui: DraftEditorUiAdapter = createDraftEditorUiAdapter(),
   ) {}
 
   watch(
@@ -100,8 +137,8 @@ export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vs
         const cached = this.cache.get(teamName, postNumber);
         if (cached) {
           try {
-            const remoteDoc = await vscode.workspace.openTextDocument(remoteUri);
-            await vscode.window.showTextDocument(remoteDoc, {
+            const remoteDoc = await this.ui.openTextDocument(remoteUri);
+            await this.ui.showTextDocument(remoteDoc, {
               preview: false,
               preserveFocus: true,
             });
@@ -109,7 +146,7 @@ export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vs
             if (current !== bodyMd) {
               const edit = new vscode.WorkspaceEdit();
               edit.replace(remoteUri, getDocumentReplaceRange(remoteDoc), bodyMd);
-              await vscode.workspace.applyEdit(edit);
+              await this.ui.applyEdit(edit);
             }
           } catch (err: unknown) {
             this.logger.error("昇格済みDraftの再保存で切替に失敗", err);
@@ -128,12 +165,13 @@ export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vs
           this.logger.error("Draft昇格用カテゴリ解決に失敗", err);
           const message =
             err instanceof EsaApiError ? err.message : "ユーザー情報の取得に失敗しました。";
-          vscode.window.showErrorMessage(message);
+          void this.ui.showErrorMessage(message);
           throw new vscode.FileSystemError(message);
         }
       }
 
       this.logger.info(`Draft昇格開始: ${uri.toString()}`);
+      const saveSubscription = this.subscribeDraftSave(uri);
       try {
         const post = await this.apiClient.createPost(
           teamName,
@@ -152,30 +190,89 @@ export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vs
         existingDraft.promotedBodyDigest = post.body_md;
 
         const remoteUri = buildEsaUri(teamName, post.number);
-        const doc = await vscode.workspace.openTextDocument(remoteUri);
-        await vscode.window.showTextDocument(doc, { preview: false, preserveFocus: true });
+        const doc = await this.ui.openTextDocument(remoteUri);
+        await this.ui.showTextDocument(doc, { preview: false, preserveFocus: true });
         const remoteText = doc.getText();
         if (remoteText !== bodyMd) {
           const edit = new vscode.WorkspaceEdit();
           edit.replace(remoteUri, getDocumentReplaceRange(doc), bodyMd);
-          await vscode.workspace.applyEdit(edit);
+          await this.ui.applyEdit(edit);
         }
-        await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
-        await vscode.window.showTextDocument(doc, { preview: false, preserveFocus: false });
-        this.draftManager.delete(uri);
-        this._onDidChangeFile.fire([{ type: vscode.FileChangeType.Changed, uri }]);
-        this.getTreeProvider()
-          ?.refresh()
-          .catch((e: unknown) => {
-            this.logger.error("Tree View更新エラー", e);
-          });
+        await this.ui.showTextDocument(doc, { preview: false, preserveFocus: false });
       } catch (err: unknown) {
+        saveSubscription.dispose();
         this.logger.error("Draft昇格失敗", err);
         const message = err instanceof EsaApiError ? err.message : "記事の昇格に失敗しました。";
-        vscode.window.showErrorMessage(message);
+        void this.ui.showErrorMessage(message);
         throw new vscode.FileSystemError(message);
       }
     });
+  }
+
+  private subscribeDraftSave(draftUri: vscode.Uri): vscode.Disposable {
+    let disposable: vscode.Disposable;
+    disposable = this.ui.onDidSaveTextDocument((savedDocument) => {
+      if (savedDocument.uri.toString() !== draftUri.toString()) {
+        return;
+      }
+      disposable.dispose();
+      void this.handleSavedDraft(draftUri).catch((err: unknown) => {
+        this.logger.error("Draft保存完了処理に失敗", err);
+      });
+    });
+    return disposable;
+  }
+
+  private async handleSavedDraft(draftUri: vscode.Uri): Promise<void> {
+    const closeResult = await this.closeDraftTab(draftUri);
+    if (closeResult === "dirty" || closeResult === "failed") {
+      return;
+    }
+    this.draftManager.delete(draftUri);
+    this._onDidChangeFile.fire([{ type: vscode.FileChangeType.Changed, uri: draftUri }]);
+    this.getTreeProvider()
+      ?.refresh()
+      .catch((e: unknown) => {
+        this.logger.error("Tree View更新エラー", e);
+      });
+  }
+
+  private async closeDraftTab(
+    draftUri: vscode.Uri,
+  ): Promise<"closed" | "dirty" | "failed" | "not_found"> {
+    const found = this.findDraftTab(draftUri);
+    if (!found) {
+      this.logger.info(`Draftタブ未検出のため閉鎖をスキップ: ${draftUri.toString()}`);
+      return "not_found";
+    }
+    if (found.isDirty) {
+      this.logger.info(`Draftタブがdirtyのため閉鎖をスキップ: ${draftUri.toString()}`);
+      return "dirty";
+    }
+    try {
+      const closed = await this.ui.closeTab(found);
+      if (!closed) {
+        void this.ui.showErrorMessage("下書きタブを閉じられませんでした。");
+        return "failed";
+      }
+      return "closed";
+    } catch (err: unknown) {
+      this.logger.error("Draftタブの閉鎖に失敗", err);
+      void this.ui.showErrorMessage("下書きタブを閉じられませんでした。");
+      return "failed";
+    }
+  }
+
+  private findDraftTab(draftUri: vscode.Uri): vscode.Tab | undefined {
+    for (const group of this.ui.getAllTabGroups()) {
+      for (const tab of group.tabs) {
+        const tabUri = getTabInputUri(tab.input);
+        if (tabUri?.toString() === draftUri.toString()) {
+          return tab;
+        }
+      }
+    }
+    return undefined;
   }
 
   delete(uri: vscode.Uri, _options: { readonly recursive: boolean }): void {
