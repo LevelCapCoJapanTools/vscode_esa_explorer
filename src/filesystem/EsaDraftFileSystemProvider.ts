@@ -188,6 +188,7 @@ export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vs
           `Draft昇格: createPost成功 #${post.number} category=${post.category ?? "(なし)"} wip=${post.wip}`,
         );
         this.cache.set(teamName, post);
+        this.getTreeProvider()?.registerCreatedPost(post);
         existingDraft.promotedPostNumber = post.number;
         existingDraft.promotedRevisionNumber = post.revision_number;
         existingDraft.promotedBodyDigest = post.body_md;
