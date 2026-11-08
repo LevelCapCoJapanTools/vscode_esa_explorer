@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import * as vscode from "vscode";
 import { getTeamName } from "../configuration.js";
 import type { EsaDraftManager } from "../draft/EsaDraftManager.js";
@@ -23,7 +24,7 @@ export function registerCreateDraftCommand(
       return;
     }
 
-    const id = crypto.randomUUID();
+    const id = randomUUID();
     const uri = buildDraftUri(teamName, id);
     draftManager.register(uri, {
       id,

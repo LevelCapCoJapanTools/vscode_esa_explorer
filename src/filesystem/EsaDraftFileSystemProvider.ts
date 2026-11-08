@@ -9,6 +9,25 @@ import type { EsaPostTreeProvider } from "../tree/EsaPostTreeProvider.js";
 import { buildEsaUri } from "./EsaUri.js";
 import { parseDraftUri } from "./EsaDraftUri.js";
 
+const draftSaveLocks = new Map<string, Promise<void>>();
+
+export function withDraftSaveLock(key: string, fn: () => Promise<void>): Promise<void> {
+  const existing = draftSaveLocks.get(key);
+  const next = (existing ?? Promise.resolve())
+    .then(() => fn())
+    .finally(() => {
+      if (draftSaveLocks.get(key) === next) {
+        draftSaveLocks.delete(key);
+      }
+    });
+  draftSaveLocks.set(key, next);
+  return next;
+}
+
+export function getDocumentReplaceRange(document: vscode.TextDocument): vscode.Range {
+  return new vscode.Range(new vscode.Position(0, 0), new vscode.Position(document.lineCount, 0));
+}
+
 export class EsaDraftFileSystemProvider
   implements vscode.FileSystemProvider, vscode.Disposable
 {
@@ -66,90 +85,93 @@ export class EsaDraftFileSystemProvider
   ): Promise<void> {
     const { teamName, id } = parseDraftUri(uri);
     const key = uri.toString();
-    const bodyMd = Buffer.from(content).toString("utf8");
-    const existingDraft = this.draftManager.get(uri) ?? this.draftManager.register(uri, { id });
+    return withDraftSaveLock(key, async () => {
+      const bodyMd = Buffer.from(content).toString("utf8");
+      const existingDraft = this.draftManager.get(uri) ?? this.draftManager.register(uri, { id });
 
-    this.draftBodies.set(key, Buffer.from(content));
-    const token = await this.credentialService.getToken();
-    if (!token) {
-      throw vscode.FileSystemError.NoPermissions("esa.ioの認証情報が設定されていません。");
-    }
+      this.draftBodies.set(key, Buffer.from(content));
+      const token = await this.credentialService.getToken();
+      if (!token) {
+        throw vscode.FileSystemError.NoPermissions("esa.ioの認証情報が設定されていません。");
+      }
 
-    if (existingDraft.promotedPostNumber !== undefined) {
-      this.logger.info(`Draft昇格済みの再保存を処理: ${uri.toString()}`);
-      const postNumber = existingDraft.promotedPostNumber;
-      const remoteUri = buildEsaUri(teamName, postNumber);
-      const cached = this.cache.get(teamName, postNumber);
-      if (cached) {
-        try {
-          const remoteDoc = await vscode.workspace.openTextDocument(remoteUri);
-          await vscode.window.showTextDocument(remoteDoc, { preview: false, preserveFocus: false });
-          const current = remoteDoc.getText();
-          if (current !== cached.post.body_md) {
-            const edit = new vscode.WorkspaceEdit();
-            edit.replace(remoteUri, new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 0)), bodyMd);
-            await vscode.workspace.applyEdit(edit);
+      if (existingDraft.promotedPostNumber !== undefined) {
+        this.logger.info(`Draft昇格済みの再保存を処理: ${uri.toString()}`);
+        const postNumber = existingDraft.promotedPostNumber;
+        const remoteUri = buildEsaUri(teamName, postNumber);
+        const cached = this.cache.get(teamName, postNumber);
+        if (cached) {
+          try {
+            const remoteDoc = await vscode.workspace.openTextDocument(remoteUri);
+            await vscode.window.showTextDocument(remoteDoc, { preview: false, preserveFocus: true });
+            const current = remoteDoc.getText();
+            if (current !== bodyMd) {
+              const edit = new vscode.WorkspaceEdit();
+              edit.replace(remoteUri, getDocumentReplaceRange(remoteDoc), bodyMd);
+              await vscode.workspace.applyEdit(edit);
+            }
+          } catch (err: unknown) {
+            this.logger.error("昇格済みDraftの再保存で切替に失敗", err);
+            throw new vscode.FileSystemError("昇格済み記事への再切替に失敗しました。");
           }
+        }
+        return;
+      }
+
+      let category = existingDraft.initialCategory;
+      if (!category) {
+        try {
+          const user = await this.apiClient.getAuthenticatedUser(token);
+          category = `Users/${user.screen_name}`;
         } catch (err: unknown) {
-          this.logger.error("昇格済みDraftの再保存で切替に失敗", err);
-          throw new vscode.FileSystemError("昇格済み記事への再切替に失敗しました。");
+          this.logger.error("Draft昇格用カテゴリ解決に失敗", err);
+          const message = err instanceof EsaApiError ? err.message : "ユーザー情報の取得に失敗しました。";
+          vscode.window.showErrorMessage(message);
+          throw new vscode.FileSystemError(message);
         }
       }
-      return;
-    }
 
-    let category = existingDraft.initialCategory;
-    if (!category) {
+      this.logger.info(`Draft昇格開始: ${uri.toString()}`);
       try {
-        const user = await this.apiClient.getAuthenticatedUser(token);
-        category = `Users/${user.screen_name}`;
+        const post = await this.apiClient.createPost(
+          teamName,
+          {
+            name: "Untitled",
+            bodyMd,
+            category,
+            wip: true,
+            message: "Created from VS Code",
+          },
+          token,
+        );
+        this.cache.set(teamName, post);
+        existingDraft.promotedPostNumber = post.number;
+        existingDraft.promotedRevisionNumber = post.revision_number;
+        existingDraft.promotedBodyDigest = post.body_md;
+
+        const remoteUri = buildEsaUri(teamName, post.number);
+        const doc = await vscode.workspace.openTextDocument(remoteUri);
+        await vscode.window.showTextDocument(doc, { preview: false, preserveFocus: true });
+        const remoteText = doc.getText();
+        if (remoteText !== bodyMd) {
+          const edit = new vscode.WorkspaceEdit();
+          edit.replace(remoteUri, getDocumentReplaceRange(doc), bodyMd);
+          await vscode.workspace.applyEdit(edit);
+        }
+        await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
+        await vscode.window.showTextDocument(doc, { preview: false, preserveFocus: false });
+        this.draftManager.delete(uri);
+        this._onDidChangeFile.fire([{ type: vscode.FileChangeType.Changed, uri }]);
+        this.getTreeProvider()?.refresh().catch((e: unknown) => {
+          this.logger.error("Tree View更新エラー", e);
+        });
       } catch (err: unknown) {
-        this.logger.error("Draft昇格用カテゴリ解決に失敗", err);
-        const message = err instanceof EsaApiError ? err.message : "ユーザー情報の取得に失敗しました。";
+        this.logger.error("Draft昇格失敗", err);
+        const message = err instanceof EsaApiError ? err.message : "記事の昇格に失敗しました。";
         vscode.window.showErrorMessage(message);
         throw new vscode.FileSystemError(message);
       }
-    }
-
-    this.logger.info(`Draft昇格開始: ${uri.toString()}`);
-    try {
-      const post = await this.apiClient.createPost(
-        teamName,
-        {
-          name: "Untitled",
-          bodyMd,
-          category,
-          wip: true,
-          message: "Created from VS Code",
-        },
-        token,
-      );
-      this.cache.set(teamName, post);
-      existingDraft.promotedPostNumber = post.number;
-      existingDraft.promotedRevisionNumber = post.revision_number;
-      existingDraft.promotedBodyDigest = post.body_md;
-
-      const remoteUri = buildEsaUri(teamName, post.number);
-      const doc = await vscode.workspace.openTextDocument(remoteUri);
-      await vscode.window.showTextDocument(doc, { preview: false, preserveFocus: false });
-      const remoteText = doc.getText();
-      if (remoteText !== bodyMd) {
-        const edit = new vscode.WorkspaceEdit();
-        edit.replace(remoteUri, new vscode.Range(new vscode.Position(0, 0), new vscode.Position(0, 0)), bodyMd);
-        await vscode.workspace.applyEdit(edit);
-      }
-      await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
-      this.draftManager.delete(uri);
-      this._onDidChangeFile.fire([{ type: vscode.FileChangeType.Changed, uri }]);
-      this.getTreeProvider()?.refresh().catch((e: unknown) => {
-        this.logger.error("Tree View更新エラー", e);
-      });
-    } catch (err: unknown) {
-      this.logger.error("Draft昇格失敗", err);
-      const message = err instanceof EsaApiError ? err.message : "記事の昇格に失敗しました。";
-      vscode.window.showErrorMessage(message);
-      throw new vscode.FileSystemError(message);
-    }
+    });
   }
 
   delete(uri: vscode.Uri, _options: { readonly recursive: boolean }): void {
