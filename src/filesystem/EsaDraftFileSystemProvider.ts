@@ -165,7 +165,7 @@ export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vs
           this.logger.error("Draft昇格用カテゴリ解決に失敗", err);
           const message =
             err instanceof EsaApiError ? err.message : "ユーザー情報の取得に失敗しました。";
-          this.ui.showErrorMessage(message);
+          void this.ui.showErrorMessage(message);
           throw new vscode.FileSystemError(message);
         }
       }
@@ -203,27 +203,29 @@ export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vs
         saveSubscription.dispose();
         this.logger.error("Draft昇格失敗", err);
         const message = err instanceof EsaApiError ? err.message : "記事の昇格に失敗しました。";
-        this.ui.showErrorMessage(message);
+        void this.ui.showErrorMessage(message);
         throw new vscode.FileSystemError(message);
       }
     });
   }
 
   private subscribeDraftSave(draftUri: vscode.Uri): vscode.Disposable {
-    const disposable = this.ui.onDidSaveTextDocument((savedDocument) => {
+    let disposable: vscode.Disposable;
+    disposable = this.ui.onDidSaveTextDocument((savedDocument) => {
       if (savedDocument.uri.toString() !== draftUri.toString()) {
         return;
       }
       disposable.dispose();
-      void this.handleSavedDraft(draftUri);
+      void this.handleSavedDraft(draftUri).catch((err: unknown) => {
+        this.logger.error("Draft保存完了処理に失敗", err);
+      });
     });
     return disposable;
   }
 
   private async handleSavedDraft(draftUri: vscode.Uri): Promise<void> {
-    const hadDraftTab = this.findDraftTab(draftUri) !== undefined;
-    const closed = await this.closeDraftTab(draftUri);
-    if (!closed && hadDraftTab) {
+    const closeResult = await this.closeDraftTab(draftUri);
+    if (closeResult === "dirty" || closeResult === "failed") {
       return;
     }
     this.draftManager.delete(draftUri);
@@ -235,26 +237,27 @@ export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vs
       });
   }
 
-  private async closeDraftTab(draftUri: vscode.Uri): Promise<boolean> {
+  private async closeDraftTab(draftUri: vscode.Uri): Promise<"closed" | "dirty" | "failed" | "not_found"> {
     const found = this.findDraftTab(draftUri);
     if (!found) {
       this.logger.info(`Draftタブ未検出のため閉鎖をスキップ: ${draftUri.toString()}`);
-      return false;
+      return "not_found";
     }
     if (found.isDirty) {
       this.logger.info(`Draftタブがdirtyのため閉鎖をスキップ: ${draftUri.toString()}`);
-      return false;
+      return "dirty";
     }
     try {
       const closed = await this.ui.closeTab(found);
       if (!closed) {
-        this.ui.showErrorMessage("下書きタブを閉じられませんでした。");
+        void this.ui.showErrorMessage("下書きタブを閉じられませんでした。");
+        return "failed";
       }
-      return closed;
+      return "closed";
     } catch (err: unknown) {
       this.logger.error("Draftタブの閉鎖に失敗", err);
-      this.ui.showErrorMessage("下書きタブを閉じられませんでした。");
-      return false;
+      void this.ui.showErrorMessage("下書きタブを閉じられませんでした。");
+      return "failed";
     }
   }
 

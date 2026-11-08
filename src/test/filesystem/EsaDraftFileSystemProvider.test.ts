@@ -175,7 +175,7 @@ suite("EsaDraftFileSystemProvider", () => {
 
   test("tabGroups.closeがfalseのときはDraftを保持して通知する", async () => {
     const fixture = createFixture();
-    fixture.ui.closeBehavior = "false";
+    fixture.ui.closeBehavior = "returnFalse";
     fixture.ui.setTabSpecs([{ uri: DRAFT_URI }]);
 
     await fixture.provider.writeFile(DRAFT_URI, CONTENT, WRITE_OPTIONS);

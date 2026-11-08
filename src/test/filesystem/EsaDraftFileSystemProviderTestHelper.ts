@@ -6,7 +6,7 @@ export interface MockTabSpec {
   isDirty?: boolean;
 }
 
-type CloseBehavior = "success" | "false" | "throw";
+type CloseBehavior = "success" | "returnFalse" | "throw";
 
 export class MockDraftEditorUiAdapter implements DraftEditorUiAdapter {
   private readonly saveListeners = new Set<(document: vscode.TextDocument) => void>();
@@ -92,7 +92,7 @@ export class MockDraftEditorUiAdapter implements DraftEditorUiAdapter {
     if (this.closeBehavior === "throw") {
       throw new Error("close failure");
     }
-    if (this.closeBehavior === "false") {
+    if (this.closeBehavior === "returnFalse") {
       return false;
     }
     this.tabGroups = this.tabGroups.map((group) => ({
