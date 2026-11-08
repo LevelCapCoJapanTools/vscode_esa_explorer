@@ -118,12 +118,20 @@ suite("EsaFileSystemProvider", () => {
   test("ロック内で最新のキャッシュ状態を見てcreate=trueを拒否する", async () => {
     const cache = new PostCache();
     const uri = buildEsaUri("team", 52);
-    const post = makePost({ number: 52, name: "存在する記事", body_md: "before", revision_number: 2 });
+    const post = makePost({
+      number: 52,
+      name: "存在する記事",
+      body_md: "before",
+      revision_number: 2,
+    });
     cache.set("team", post);
 
     const originalGet = cache.get.bind(cache);
     let getCount = 0;
-    (cache as unknown as { get: typeof cache.get }).get = ((teamName: string, postNumber: number) => {
+    (cache as unknown as { get: typeof cache.get }).get = ((
+      teamName: string,
+      postNumber: number,
+    ) => {
       getCount += 1;
       if (getCount === 1) {
         return undefined;

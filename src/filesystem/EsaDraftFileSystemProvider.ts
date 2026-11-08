@@ -198,17 +198,6 @@ export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vs
           edit.replace(remoteUri, getDocumentReplaceRange(doc), bodyMd);
           await this.ui.applyEdit(edit);
         }
-        this.draftManager.delete(uri);
-        this._onDidChangeFile.fire([{ type: vscode.FileChangeType.Changed, uri }]);
-        const treeProvider = this.getTreeProvider();
-        const refreshPromise = treeProvider
-          ? treeProvider.refresh().catch((e: unknown) => {
-              this.logger.error("Tree View更新エラー", e);
-            })
-          : Promise.resolve();
-        await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
-        await refreshPromise;
-        await this.ui.showTextDocument(doc, { preview: false, preserveFocus: false });
       } catch (err: unknown) {
         saveSubscription.dispose();
         this.logger.error("Draft昇格失敗", err);
