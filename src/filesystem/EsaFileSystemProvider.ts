@@ -24,6 +24,10 @@ async function withSaveLock(key: string, fn: () => Promise<void>): Promise<void>
   return next;
 }
 
+export function shouldRejectCreateOption(create: boolean, hasCachedPost: boolean): boolean {
+  return create && !hasCachedPost;
+}
+
 export class EsaFileSystemProvider implements vscode.FileSystemProvider, vscode.Disposable {
   private readonly _onDidChangeFile = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
   readonly onDidChangeFile = this._onDidChangeFile.event;
@@ -93,17 +97,17 @@ export class EsaFileSystemProvider implements vscode.FileSystemProvider, vscode.
     content: Uint8Array,
     options: { readonly create: boolean; readonly overwrite: boolean },
   ): Promise<void> {
-    if (options.create) {
+    const { teamName, postNumber } = parseEsaUri(uri);
+    const hasCachedPost = this.cache.get(teamName, postNumber) !== undefined;
+    if (shouldRejectCreateOption(options.create, hasCachedPost)) {
       throw vscode.FileSystemError.NoPermissions("記事の新規作成はサポートされていません。");
     }
-    const { teamName: checkTeam, postNumber: checkPost } = parseEsaUri(uri);
-    if (!options.overwrite && this.cache.get(checkTeam, checkPost)) {
+    if (!options.overwrite && hasCachedPost) {
       throw vscode.FileSystemError.FileExists(uri);
     }
 
     const uriKey = uri.toString();
     return withSaveLock(uriKey, async () => {
-      const { teamName, postNumber } = parseEsaUri(uri);
       const cached = this.cache.get(teamName, postNumber);
       if (!cached) {
         throw vscode.FileSystemError.FileNotFound(uri);

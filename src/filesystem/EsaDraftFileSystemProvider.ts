@@ -160,15 +160,16 @@ export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vs
           edit.replace(remoteUri, getDocumentReplaceRange(doc), bodyMd);
           await vscode.workspace.applyEdit(edit);
         }
-        await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
-        await vscode.window.showTextDocument(doc, { preview: false, preserveFocus: false });
         this.draftManager.delete(uri);
         this._onDidChangeFile.fire([{ type: vscode.FileChangeType.Changed, uri }]);
-        this.getTreeProvider()
-          ?.refresh()
-          .catch((e: unknown) => {
+        const treeProvider = this.getTreeProvider();
+        if (treeProvider) {
+          await treeProvider.refresh().catch((e: unknown) => {
             this.logger.error("Tree View更新エラー", e);
           });
+        }
+        await vscode.commands.executeCommand("workbench.action.closeActiveEditor");
+        await vscode.window.showTextDocument(doc, { preview: false, preserveFocus: false });
       } catch (err: unknown) {
         this.logger.error("Draft昇格失敗", err);
         const message = err instanceof EsaApiError ? err.message : "記事の昇格に失敗しました。";
