@@ -115,6 +115,49 @@ suite("EsaFileSystemProvider", () => {
     );
   });
 
+  test("ロック内で最新のキャッシュ状態を見てcreate=trueを拒否する", async () => {
+    const cache = new PostCache();
+    const uri = buildEsaUri("team", 52);
+    const post = makePost({ number: 52, name: "存在する記事", body_md: "before", revision_number: 2 });
+    cache.set("team", post);
+
+    const originalGet = cache.get.bind(cache);
+    let getCount = 0;
+    (cache as unknown as { get: typeof cache.get }).get = ((teamName: string, postNumber: number) => {
+      getCount += 1;
+      if (getCount === 1) {
+        return undefined;
+      }
+      return originalGet(teamName, postNumber);
+    }) as typeof cache.get;
+
+    const apiClient = {} as EsaApiClient;
+    const credentialService = {} as CredentialService;
+    const logger = {
+      info: () => undefined,
+      error: () => undefined,
+    } as unknown as ExtensionLogger;
+    const provider = new EsaFileSystemProvider(
+      cache,
+      apiClient,
+      credentialService,
+      logger,
+      () => undefined,
+    );
+
+    await assert.rejects(
+      () =>
+        provider.writeFile(uri, Buffer.from("after", "utf8"), {
+          create: true,
+          overwrite: true,
+        }),
+      (err: unknown) =>
+        err instanceof vscode.FileSystemError &&
+        err.message.includes("記事の新規作成はサポートされていません。"),
+    );
+    assert.strictEqual(getCount, 1);
+  });
+
   test("create判定はキャッシュ有無で分岐する", () => {
     assert.strictEqual(shouldRejectCreateOption(true, false), true);
     assert.strictEqual(shouldRejectCreateOption(true, true), false);

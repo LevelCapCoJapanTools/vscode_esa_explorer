@@ -98,17 +98,16 @@ export class EsaFileSystemProvider implements vscode.FileSystemProvider, vscode.
     options: { readonly create: boolean; readonly overwrite: boolean },
   ): Promise<void> {
     const { teamName, postNumber } = parseEsaUri(uri);
-    const hasCachedPost = this.cache.get(teamName, postNumber) !== undefined;
-    if (shouldRejectCreateOption(options.create, hasCachedPost)) {
-      throw vscode.FileSystemError.NoPermissions("記事の新規作成はサポートされていません。");
-    }
-    if (!options.overwrite && hasCachedPost) {
-      throw vscode.FileSystemError.FileExists(uri);
-    }
-
     const uriKey = uri.toString();
     return withSaveLock(uriKey, async () => {
       const cached = this.cache.get(teamName, postNumber);
+      const hasCachedPost = cached !== undefined;
+      if (shouldRejectCreateOption(options.create, hasCachedPost)) {
+        throw vscode.FileSystemError.NoPermissions("記事の新規作成はサポートされていません。");
+      }
+      if (!options.overwrite && hasCachedPost) {
+        throw vscode.FileSystemError.FileExists(uri);
+      }
       if (!cached) {
         throw vscode.FileSystemError.FileNotFound(uri);
       }
