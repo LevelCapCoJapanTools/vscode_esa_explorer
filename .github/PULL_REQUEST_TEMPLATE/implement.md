@@ -200,3 +200,12 @@ diffの目次（ファイル×変更概要）を下記のテーブルに記載�
 - フィードバック（要約）：<<feedback>>　対応（何を変えた）：<<action>>　対象（ファイル/行/Commit）：<<target>>　状態（対応済/保留/却下）：<<status>>
 - フィードバック（要約）：<<feedback>>　対応（何を変えた）：<<action>>　対象（ファイル/行/Commit）：<<target>>　状態（対応済/保留/却下）：<<status>>
 - フィードバック（要約）：<<feedback>>　対応（何を変えた）：<<action>>　対象（ファイル/行/Commit）：<<target>>　状態（対応済/保留/却下）：<<status>>
+
+# コードレビューフィードバック対応（Review Feedback Response）
+
+## 追記（今回分）
+
+- フィードバック（要約）：Draft保存の競合で重複記事が作成される可能性がある　対応（何を変えた）：DraftごとにURI単位の保存ロックを導入し、同一 Draft の writeFile を直列化した　対象（ファイル/行/Commit）：`src/filesystem/EsaDraftFileSystemProvider.ts`, `d809c09`　状態（対応済/保留/却下）：対応済
+- フィードバック（要約）：昇格済みDraftの本文反映条件と置換範囲が不適切である　対応（何を変えた）：`bodyMd` 比較に修正し、ドキュメント全体を `replace` で置換するよう変更した　対象（ファイル/行/Commit）：`src/filesystem/EsaDraftFileSystemProvider.ts`, `d809c09`　状態（対応済/保留/却下）：対応済
+- フィードバック（要約）：リモート記事タブが閉じられて Draft を閉じてしまう　対応（何を変えた）：`showTextDocument` の `preserveFocus` を `true` にし、Draft を閉じた後にリモートへ再フォーカスする順序に修正した　対象（ファイル/行/Commit）：`src/filesystem/EsaDraftFileSystemProvider.ts`, `d809c09`　状態（対応済/保留/却下）：対応済
+- フィードバック（要約）：UUID生成が環境依存で失敗する　対応（何を変えた）：`crypto.randomUUID()` を `node:crypto` の `randomUUID()` へ変更した　対象（ファイル/行/Commit）：`src/commands/createDraftCommand.ts`, `d809c09`　状態（対応済/保留/却下）：対応済
