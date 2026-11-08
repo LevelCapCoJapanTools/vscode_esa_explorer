@@ -237,7 +237,9 @@ export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vs
       });
   }
 
-  private async closeDraftTab(draftUri: vscode.Uri): Promise<"closed" | "dirty" | "failed" | "not_found"> {
+  private async closeDraftTab(
+    draftUri: vscode.Uri,
+  ): Promise<"closed" | "dirty" | "failed" | "not_found"> {
     const found = this.findDraftTab(draftUri);
     if (!found) {
       this.logger.info(`Draftタブ未検出のため閉鎖をスキップ: ${draftUri.toString()}`);
