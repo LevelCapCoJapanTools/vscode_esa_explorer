@@ -12,7 +12,12 @@ import { registerOpenInBrowserCommand } from "./commands/openInBrowserCommand.js
 import { registerCreateDraftCommand } from "./commands/createDraftCommand.js";
 import { EsaDraftManager } from "./draft/EsaDraftManager.js";
 import { EsaDraftFileSystemProvider } from "./filesystem/EsaDraftFileSystemProvider.js";
-import { CONTEXT_IS_CONFIGURED, ESA_DRAFT_URI_SCHEME, ESA_URI_SCHEME, TREE_VIEW_ID } from "./constants.js";
+import {
+  CONTEXT_IS_CONFIGURED,
+  ESA_DRAFT_URI_SCHEME,
+  ESA_URI_SCHEME,
+  TREE_VIEW_ID,
+} from "./constants.js";
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const logger = new ExtensionLogger();

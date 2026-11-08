@@ -19,7 +19,7 @@ export function registerCreateDraftCommand(
     const teamName = getTeamName();
     if (!teamName) {
       vscode.window.showErrorMessage(
-        "esa.ioの接続設定が完了していません。\"esa Explorer: 接続設定\"を実行してください。",
+        'esa.ioの接続設定が完了していません。"esa Explorer: 接続設定"を実行してください。',
       );
       return;
     }

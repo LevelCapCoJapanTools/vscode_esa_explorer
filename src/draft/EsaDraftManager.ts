@@ -20,8 +20,7 @@ export class EsaDraftManager {
       id: existing?.id ?? parsed.id,
       initialCategory: existing?.initialCategory ?? draft.initialCategory,
       promotedPostNumber: existing?.promotedPostNumber ?? draft.promotedPostNumber,
-      promotedRevisionNumber:
-        existing?.promotedRevisionNumber ?? draft.promotedRevisionNumber,
+      promotedRevisionNumber: existing?.promotedRevisionNumber ?? draft.promotedRevisionNumber,
       promotedBodyDigest: existing?.promotedBodyDigest ?? draft.promotedBodyDigest,
     };
     this.drafts.set(key, next);

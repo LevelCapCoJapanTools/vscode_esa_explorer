@@ -28,9 +28,7 @@ export function getDocumentReplaceRange(document: vscode.TextDocument): vscode.R
   return new vscode.Range(new vscode.Position(0, 0), new vscode.Position(document.lineCount, 0));
 }
 
-export class EsaDraftFileSystemProvider
-  implements vscode.FileSystemProvider, vscode.Disposable
-{
+export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vscode.Disposable {
   private readonly draftBodies = new Map<string, Uint8Array>();
   private readonly _onDidChangeFile = new vscode.EventEmitter<vscode.FileChangeEvent[]>();
   readonly onDidChangeFile = this._onDidChangeFile.event;
@@ -103,7 +101,10 @@ export class EsaDraftFileSystemProvider
         if (cached) {
           try {
             const remoteDoc = await vscode.workspace.openTextDocument(remoteUri);
-            await vscode.window.showTextDocument(remoteDoc, { preview: false, preserveFocus: true });
+            await vscode.window.showTextDocument(remoteDoc, {
+              preview: false,
+              preserveFocus: true,
+            });
             const current = remoteDoc.getText();
             if (current !== bodyMd) {
               const edit = new vscode.WorkspaceEdit();
@@ -125,7 +126,8 @@ export class EsaDraftFileSystemProvider
           category = `Users/${user.screen_name}`;
         } catch (err: unknown) {
           this.logger.error("Draft昇格用カテゴリ解決に失敗", err);
-          const message = err instanceof EsaApiError ? err.message : "ユーザー情報の取得に失敗しました。";
+          const message =
+            err instanceof EsaApiError ? err.message : "ユーザー情報の取得に失敗しました。";
           vscode.window.showErrorMessage(message);
           throw new vscode.FileSystemError(message);
         }
@@ -162,9 +164,11 @@ export class EsaDraftFileSystemProvider
         await vscode.window.showTextDocument(doc, { preview: false, preserveFocus: false });
         this.draftManager.delete(uri);
         this._onDidChangeFile.fire([{ type: vscode.FileChangeType.Changed, uri }]);
-        this.getTreeProvider()?.refresh().catch((e: unknown) => {
-          this.logger.error("Tree View更新エラー", e);
-        });
+        this.getTreeProvider()
+          ?.refresh()
+          .catch((e: unknown) => {
+            this.logger.error("Tree View更新エラー", e);
+          });
       } catch (err: unknown) {
         this.logger.error("Draft昇格失敗", err);
         const message = err instanceof EsaApiError ? err.message : "記事の昇格に失敗しました。";
@@ -179,7 +183,11 @@ export class EsaDraftFileSystemProvider
     this.draftManager.delete(uri);
   }
 
-  rename(_oldUri: vscode.Uri, _newUri: vscode.Uri, _options: { readonly overwrite: boolean }): void {
+  rename(
+    _oldUri: vscode.Uri,
+    _newUri: vscode.Uri,
+    _options: { readonly overwrite: boolean },
+  ): void {
     throw vscode.FileSystemError.NoPermissions("Draftの名前変更はサポートされていません。");
   }
 

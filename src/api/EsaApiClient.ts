@@ -1,6 +1,12 @@
 import { API_BASE_URL, API_PER_PAGE, API_TIMEOUT_MS } from "../constants.js";
 import { EsaApiError } from "./EsaApiError.js";
-import type { CreatePostInput, EsaAuthenticatedUser, EsaPost, EsaPostsResponse, UpdatePostInput } from "./types.js";
+import type {
+  CreatePostInput,
+  EsaAuthenticatedUser,
+  EsaPost,
+  EsaPostsResponse,
+  UpdatePostInput,
+} from "./types.js";
 
 export type FetchFn = typeof fetch;
 
