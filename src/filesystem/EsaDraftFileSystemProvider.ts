@@ -184,6 +184,9 @@ export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vs
           },
           token,
         );
+        this.logger.info(
+          `Draft昇格: createPost成功 #${post.number} category=${post.category ?? "(なし)"} wip=${post.wip}`,
+        );
         this.cache.set(teamName, post);
         existingDraft.promotedPostNumber = post.number;
         existingDraft.promotedRevisionNumber = post.revision_number;
@@ -233,8 +236,17 @@ export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vs
   }
 
   private refreshTree(): void {
-    this.getTreeProvider()
-      ?.refresh()
+    const treeProvider = this.getTreeProvider();
+    if (!treeProvider) {
+      this.logger.warn("Tree View更新要求: TreeProviderが未取得のためスキップ");
+      return;
+    }
+    this.logger.info("Tree View更新要求: Draft昇格後");
+    treeProvider
+      .refresh()
+      .then(() => {
+        this.logger.info("Tree View更新要求: 完了");
+      })
       .catch((e: unknown) => {
         this.logger.error("Tree View更新エラー", e);
       });

@@ -44,6 +44,7 @@ export class EsaPostTreeProvider implements vscode.TreeDataProvider<TreeItem>, v
 
   refresh(): Promise<void> {
     if (this.isLoading) {
+      this.logger.info("記事一覧更新: 取得中のため再更新を予約");
       this.pendingRefresh = true;
       return this.refreshPromise ?? Promise.resolve();
     }
@@ -81,6 +82,7 @@ export class EsaPostTreeProvider implements vscode.TreeDataProvider<TreeItem>, v
       );
 
       this._onDidChangeTreeData.fire();
+      this.logger.info(`記事一覧更新: Tree View再描画を通知 (ルート ${this.rootItems.length}件)`);
       this.onRefreshComplete?.();
     } catch (err: unknown) {
       this.logger.error("記事一覧取得エラー", err);
