@@ -50,7 +50,7 @@
 | 機能ゴール（実装後に観測できるユーザーユース） | Draft を保存した直後に、作成元の `esa-draft:` エディタだけが閉じ、リモート記事 `esa:` エディタは残るまたはフォーカスされる | Issue 本文の再現条件 |
 | 非ゴール（今回やらないこと） | `createDraftCommand` の UX 自体の変更、API 仕様変更、Marketplace 公開作業 | issue の非ゴール |
 | 完了条件（実装完了の判定） | 1) Draft 保存直後に本来の Draft タブが閉じる 2) リモート記事が意図せず閉じない 3) `createPost` が失敗したとき Draft が残る 4) 回帰テストが追加される | issue の必須ゴール |
-| 受入確認手順（1行で再現可能） | VS Code で「新規記事」を作成し、Draft に入力後保存し、昇格成功時に Draft タブのみ閉じ、リモート記事が残ることを確認し、`npm run check` と `npm test` を実行する | `.github/copilot/40-testing-strategy.md` と `60-ci-quality-gates.md` |
+| 受入確認手順（1行で再現可能） | VS Code で「新規記事」を作成し、Draft に入力後保存し、昇格成功時に Draft タブのみ閉じ、リモート記事が残ることを確認し、`npm run verify` を実行する | `.github/copilot/40-testing-strategy.md` と `60-ci-quality-gates.md` |
 
 ---
 
@@ -62,7 +62,7 @@
 | アーキテクチャ前提（UI/Provider・Service/ApiClient） | `src/extension.ts activate()` が DI 起点、UI/Provider は `EsaApiClient` を直接生成せず、HTTP は `src/api/` に閉じる | `.github/copilot/20-architecture.md` |
 | VS Code バージョン要件 | `^1.105.0` | `package.json` |
 | 技術制約（互換性/期限/運用/セキュリティ） | セキュリティ要件を維持し、Draft の閉鎖は対象 URI を明示して行う | `.github/copilot/50-security.md` |
-| 未確定前提 | 本件における未確定は0件。設計で決定可能な事項はここで固定する。 | issue 要件 |
+| 未確定前提 | 実装時の `TextEditor` 特定方式（`visibleTextEditors` / `tabGroups` / `TextDocument` からの解決）は未確定であり、実装段階で決定する。設計ではこの点を TBD として明記し、他の事項はここで固定する。 | issue 要件 |
 
 ---
 
