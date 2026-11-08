@@ -184,10 +184,15 @@ export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vs
           },
           token,
         );
+        this.logger.info(
+          `Draft昇格: createPost成功 #${post.number} category=${post.category ?? "(なし)"} wip=${post.wip}`,
+        );
         this.cache.set(teamName, post);
+        this.getTreeProvider()?.registerCreatedPost(post);
         existingDraft.promotedPostNumber = post.number;
         existingDraft.promotedRevisionNumber = post.revision_number;
         existingDraft.promotedBodyDigest = post.body_md;
+        this.refreshTree();
 
         const remoteUri = buildEsaUri(teamName, post.number);
         const doc = await this.ui.openTextDocument(remoteUri);
@@ -198,7 +203,6 @@ export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vs
           edit.replace(remoteUri, getDocumentReplaceRange(doc), bodyMd);
           await this.ui.applyEdit(edit);
         }
-        await this.ui.showTextDocument(doc, { preview: false, preserveFocus: false });
       } catch (err: unknown) {
         saveSubscription.dispose();
         this.logger.error("Draft昇格失敗", err);
@@ -230,8 +234,20 @@ export class EsaDraftFileSystemProvider implements vscode.FileSystemProvider, vs
     }
     this.draftManager.delete(draftUri);
     this._onDidChangeFile.fire([{ type: vscode.FileChangeType.Changed, uri: draftUri }]);
-    this.getTreeProvider()
-      ?.refresh()
+  }
+
+  private refreshTree(): void {
+    const treeProvider = this.getTreeProvider();
+    if (!treeProvider) {
+      this.logger.warn("Tree View更新要求: TreeProviderが未取得のためスキップ");
+      return;
+    }
+    this.logger.info("Tree View更新要求: Draft昇格後");
+    treeProvider
+      .refresh()
+      .then(() => {
+        this.logger.info("Tree View更新要求: 完了");
+      })
       .catch((e: unknown) => {
         this.logger.error("Tree View更新エラー", e);
       });

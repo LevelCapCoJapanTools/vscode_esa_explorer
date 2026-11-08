@@ -44,6 +44,7 @@ interface ProviderFixture {
   ui: MockDraftEditorUiAdapter;
   draftManager: EsaDraftManager;
   refreshCalls: number;
+  registeredPosts: number[];
 }
 
 function createFixture(options?: {
@@ -76,9 +77,13 @@ function createFixture(options?: {
     error: () => undefined,
   };
   let refreshCalls = 0;
+  const registeredPosts: number[] = [];
   const treeProvider = {
     refresh: async () => {
       refreshCalls += 1;
+    },
+    registerCreatedPost: (post: { number: number }) => {
+      registeredPosts.push(post.number);
     },
   };
   const provider = new EsaDraftFileSystemProvider(
@@ -95,6 +100,7 @@ function createFixture(options?: {
     provider,
     ui,
     draftManager,
+    registeredPosts,
     get refreshCalls() {
       return refreshCalls;
     },
@@ -158,6 +164,7 @@ suite("EsaDraftFileSystemProvider", () => {
     assert.ok(remainingTabs.some((tab) => tabUri(tab) === remoteUri.toString()));
     assert.strictEqual(fixture.draftManager.get(DRAFT_URI), undefined);
     assert.strictEqual(fixture.refreshCalls, 1);
+    assert.strictEqual(fixture.registeredPosts.length, 1);
   });
 
   test("createPost失敗時はDraftを保持して閉じない", async () => {
@@ -171,6 +178,7 @@ suite("EsaDraftFileSystemProvider", () => {
     assert.strictEqual(fixture.ui.closedTabs.length, 0);
     assert.ok(fixture.draftManager.get(DRAFT_URI));
     assert.strictEqual(fixture.ui.errorMessages.length, 1);
+    assert.strictEqual(fixture.refreshCalls, 0);
   });
 
   test("tabGroups.closeがfalseのときはDraftを保持して通知する", async () => {
@@ -197,6 +205,7 @@ suite("EsaDraftFileSystemProvider", () => {
 
     assert.strictEqual(fixture.ui.closedTabs.length, 0);
     assert.ok(fixture.draftManager.get(DRAFT_URI));
+    assert.strictEqual(fixture.refreshCalls, 1);
   });
 
   test("Draftタブ未検出時は通知せずにDraft状態を破棄する", async () => {
