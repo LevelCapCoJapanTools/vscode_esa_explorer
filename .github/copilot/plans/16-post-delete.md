@@ -496,7 +496,7 @@ flowchart TD
 | --- | --- |
 | テスト方式 | @vscode/test-cli と Mocha / suite / test を用いる |
 | 置き場所 | src/test/api / src/test/commands / src/test/tree など |
-| モック方針 | fetch は `vi`/モック関数で差し替え、SecretStorage は stub オブジェクトで差し替える |
+| モック方針 | fetch は手書きの mock fetch / helper 関数で差し替え、SecretStorage は stub オブジェクトで差し替える |
 | 共通ヘルパ | src/test/helpers/ にスタブ生成関数を置く |
 | 実行コマンド | npm test / CI 環境では xvfb-run -a npm test |
 
