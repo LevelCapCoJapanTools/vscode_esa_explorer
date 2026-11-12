@@ -55,7 +55,7 @@
 
 | 項目                                           | 内容                                                                                                                                                                                              | 根拠                                                    |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| 実装対象詳細（機能/コマンド/View/API）         | esaExplorer.posts の記事項目の右クリックメニューに削除を追加し、確認ダイアログを経て POST/記事の削除 API を呼ぶ                                                                                   | issue本文 / package.json の existing menu definitions   |
+| 実装対象詳細（機能/コマンド/View/API）         | esaExplorer.posts の記事項目の右クリックメニューに削除を追加し、確認ダイアログを経て esa API の記事削除（DELETE）を呼ぶ                                                                           | issue本文 / package.json の existing menu definitions   |
 | 機能ゴール（実装後に観測できるユーザーユース） | ユーザーが記事を右クリックして削除を選択し、確認後に esa.io 上の記事が削除され、Tree View が更新される                                                                                            | issue本文                                               |
 | 非ゴール（今回やらないこと）                   | 記事の復元、複数記事の一括削除、外部 API 仕様変更、追加の公開作業                                                                                                                                 | issue本文 §3.3                                          |
 | 完了条件（実装完了の判定）                     | 削除コマンドが確認を挟み、API 成功時に Tree View とキャッシュが更新され、失敗時はユーザーに分かるメッセージが出る                                                                                 | Issue本文 §5 /                                          |
@@ -79,25 +79,25 @@
 
 ### 3.1 機能要件
 
-| ID    | 要件                                                         | 受入条件（テスト可能な形）                                                |
-| ----- | ------------------------------------------------------------ | ------------------------------------------------------------------------- |
-| FR-01 | 記事の右クリックメニューに削除を表示する                     | viewItem が esaPost のときのみ、command が表示される                      |
-| FR-02 | API 呼び出し前に確認ダイアログを表示する                     | Cancel では HTTP DELETE を呼ばない                                        |
-| FR-03 | EAS API の削除は EsaApiClient 経由の唯一の通信経路で実行する | UI / Provider から fetch を直接呼ばない                                   |
-| FR-04 | 削除成功後は Tree View とキャッシュの両方を更新する          | refresh() が再実行され、削除対象 post が一覧から消える                    |
-| FR-05 | 削除失敗時はエラーを通知して停止する                         | showErrorMessage が表示され、tree の状態が壊れない                        |
-| FR-06 | 既に存在しない記事の削除は境界値として安全に扱う             | 404 と判定された場合も未定義の例外を出さない                              |
-| FR-07 | 依存の注入は extension.ts activate() から行う                | DI経路が activate -> deletePostCommand / EsaPostTreeProvider で固定される |
-| FR-08 | PAT は SecretStorage だけで扱う                              | config / globalState / log への保存がない                                 |
+| ID    | 要件                                                         | 受入条件（テスト可能な形）                                                                                                    |
+| ----- | ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| FR-01 | 記事の右クリックメニューに削除を表示する                     | viewItem が esaPost のときのみ、command が表示される                                                                          |
+| FR-02 | API 呼び出し前に確認ダイアログを表示する                     | Cancel では HTTP DELETE を呼ばない                                                                                            |
+| FR-03 | esa API の削除は EsaApiClient 経由の唯一の通信経路で実行する | UI / Provider から fetch を直接呼ばない                                                                                       |
+| FR-04 | 削除成功後は Tree View とキャッシュの両方を更新する          | 削除対象 post を localPosts から除去したうえで refresh() を実行し、一覧から消える。作成直後（TTL 内）の記事も一覧に復活しない |
+| FR-05 | 削除失敗時はエラーを通知して停止する                         | showErrorMessage が表示され、tree の状態が壊れない                                                                            |
+| FR-06 | 既に存在しない記事の削除は境界値として安全に扱う             | 404 と判定された場合も未定義の例外を出さない                                                                                  |
+| FR-07 | 依存の注入は extension.ts activate() から行う                | DI経路が activate -> deletePostCommand / EsaPostTreeProvider で固定される                                                     |
+| FR-08 | PAT は SecretStorage だけで扱う                              | config / globalState / log への保存がない                                                                                     |
 
 ### 3.2 非機能要件
 
-| ID     | 要件                                           | 受入条件（テスト可能な形）                                     |
-| ------ | ---------------------------------------------- | -------------------------------------------------------------- |
-| NFR-01 | 確認ダイアログなしで削除 API を呼ばない        | UI テストまたは命令分岐テストで確認                            |
-| NFR-02 | オペレーションは async/await に統一する        | コールバックでの完了待ちをしない                               |
-| NFR-03 | すべての CI 品質ゲートを通過する               | npm run typecheck / lint / format:check / test / security が緑 |
-| NFR-04 | 機密情報をログまたはエラーメッセージに出さない | PAT 文字列が無視されることをテストで担保                       |
+| ID     | 要件                                           | 受入条件（テスト可能な形）                                                            |
+| ------ | ---------------------------------------------- | ------------------------------------------------------------------------------------- |
+| NFR-01 | 確認ダイアログなしで削除 API を呼ばない        | UI テストまたは命令分岐テストで確認                                                   |
+| NFR-02 | オペレーションは async/await に統一する        | コールバックでの完了待ちをしない                                                      |
+| NFR-03 | すべての CI 品質ゲートを通過する               | npm run typecheck / lint / format:check / test / security が緑                        |
+| NFR-04 | 機密情報をログまたはエラーメッセージに出さない | 例外メッセージ・ログ出力に token 文字列と teamName が含まれないことをテストで確認する |
 
 ---
 
@@ -116,14 +116,15 @@
 
 ### 4.2 実装時の影響範囲・互換性リスク
 
-| 影響対象                             | 結論（影響あり/なし/未確定） | 影響内容                                |
-| ------------------------------------ | ---------------------------- | --------------------------------------- |
-| UI（Tree View/コマンド/QuickPick等） | 影響あり                     | 右クリックメニューに削除項目を追加      |
-| API/外部通信（esa Public API v1）    | 影響あり                     | DELETE 呼び出しと HTTP エラー処理を追加 |
-| データモデル（api/types.ts）         | 影響なし                     | 既存の投稿型をそのまま利用する          |
-| 外部依存（npm）                      | 影響なし                     | 新規依存は不要                          |
-| CI/運用                              | 影響あり                     | 追加テストと CI 実行を継続する          |
-| package.json contributes             | 影響あり                     | commands / menus の 追加                |
+| 影響対象                                    | 結論（影響あり/なし/未確定） | 影響内容                                                                            |
+| ------------------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------- |
+| UI（Tree View/コマンド/QuickPick等）        | 影響あり                     | 右クリックメニューに削除項目を追加                                                  |
+| API/外部通信（esa Public API v1）           | 影響あり                     | DELETE 呼び出しと HTTP エラー処理を追加                                             |
+| データモデル（api/types.ts）                | 影響なし                     | 既存の投稿型をそのまま利用する                                                      |
+| 外部依存（npm）                             | 影響なし                     | 新規依存は不要                                                                      |
+| CI/運用                                     | 影響あり                     | 追加テストと CI 実行を継続する                                                      |
+| package.json contributes                    | 影響あり                     | commands / menus の 追加（commandPalette で非表示化を含む）                         |
+| エディタ・保存処理（EsaFileSystemProvider） | 影響あり                     | 削除済み記事を開いているエディタの保存は 404 になるため、エラー通知の扱いを確認する |
 
 ### 4.3 外部依存・Secrets の扱い
 
@@ -147,43 +148,45 @@
 
 ### 5.0 依存の組み立て（DI）経路
 
-本プロジェクトは src/extension.ts の activate(context) を唯一のDIルートとし、コンストラクタ注入を採用する。UI / Provider 層 is not allowed to instantiate EsaApiClient directly.
+本プロジェクトは src/extension.ts の activate(context) を唯一のDIルートとし、コンストラクタ注入を採用する。UI / Provider 層は EsaApiClient を直接生成してはならない。
 
-| 区分 | 提供主体                | 提供する依存                                     | 受け取る側                 | 入力（型/値）                                 | 出力（型/値） | 境界制約                                |
-| ---- | ----------------------- | ------------------------------------------------ | -------------------------- | --------------------------------------------- | ------------- | --------------------------------------- |
-| 01   | extension.ts activate() | EsaApiClient, CredentialService, ExtensionLogger | deletePostCommand 登録関数 | context, apiClient, credentialService, logger | Disposable    | UI 層は HTTP 実装を持たない             |
-| 02   | extension.ts activate() | EsaPostTreeProvider                              | deletePostCommand          | treeProvider                                  | Provider      | 直接の fetch 実装を禁止                 |
-| 03   | deletePostCommand       | teamName, token, postNumber                      | EsaApiClient.deletePost    | string, string, number                        | Promise<void> | 例外は EsaApiError として上位層へ伝える |
-| 04   | EsaPostTreeProvider     | refresh()                                        | Tree View                  | なし                                          | Promise<void> | onDidChangeTreeData.fire() で再描画通知 |
+| 区分 | 提供主体                | 提供する依存                                                | 受け取る側                 | 入力（型/値）                                                      | 出力（型/値） | 境界制約                                |
+| ---- | ----------------------- | ----------------------------------------------------------- | -------------------------- | ------------------------------------------------------------------ | ------------- | --------------------------------------- |
+| 01   | extension.ts activate() | EsaApiClient, CredentialService, PostCache, ExtensionLogger | deletePostCommand 登録関数 | context, apiClient, credentialService, cache, logger, treeProvider | Disposable    | UI 層は HTTP 実装を持たない             |
+| 02   | extension.ts activate() | EsaPostTreeProvider                                         | deletePostCommand          | treeProvider                                                       | Provider      | 直接の fetch 実装を禁止                 |
+| 03   | deletePostCommand       | teamName, token, postNumber                                 | EsaApiClient.deletePost    | string, string, number                                             | Promise<void> | 例外は EsaApiError として上位層へ伝える |
+| 04   | EsaPostTreeProvider     | refresh()                                                   | Tree View                  | なし                                                               | Promise<void> | onDidChangeTreeData.fire() で再描画通知 |
 
 ### 5.1 設計判断
 
 #### 5.1.1 責務分離 / データフロー（詳細）
 
-| No. | 決定事項（実装責務単位）                                                                                         | 根拠                                   | 未確定（あれば） |
-| --- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------- | ---------------- |
-| 1   | package.json の `view/item/context` に `esaExplorer.deletePost` を追加し、Tree Item から対象記事番号を取得する   | issue本文の前提                        | なし             |
-| 2   | deletePostCommand が確認ダイアログと `CredentialService.getToken()` を呼び、`EsaApiClient.deletePost` に委譲する | .github/copilot/20-architecture.md     | なし             |
-| 3   | 削除成功後に `EsaPostTreeProvider.refresh()` を呼び、`localPosts` と `PostCache` の除去を再構築する              | src/tree/EsaPostTreeProvider.ts の設計 | なし             |
+| No. | 決定事項（実装責務単位）                                                                                                                                                                                                        | 根拠                                   | 未確定（あれば） |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- | ---------------- |
+| 1   | package.json の `view/item/context` に `esaExplorer.deletePost` を追加し、Tree Item から対象記事番号を取得する                                                                                                                  | issue本文の前提                        | なし             |
+| 2   | deletePostCommand が確認ダイアログと `CredentialService.getToken()` を呼び、`EsaApiClient.deletePost` に委譲する                                                                                                                | .github/copilot/20-architecture.md     | なし             |
+| 3   | 削除成功後に `EsaPostTreeProvider.unregisterPost(postNumber)` で `localPosts` から除去してから `refresh()` を呼ぶ（除去しないと、TTL 内の作成直後の記事が `mergeLocalPosts` で一覧に復活する）。`PostCache.delete` も同時に行う | src/tree/EsaPostTreeProvider.ts の設計 | なし             |
 
 #### 5.1.2 エッジケース / 例外系 / リトライ方針（詳細）
 
-| No. | ケース          | 方針（戻り値/表示/再試行）                                       | 根拠                               | 未確定（あれば） |
-| --- | --------------- | ---------------------------------------------------------------- | ---------------------------------- | ---------------- |
-| 1   | user cancel     | DELETE を呼ばず終了                                              | 取り消し不能な操作の保護           | なし             |
-| 2   | 401/403         | `EsaApiError` を message 化して表示                              | 既存 の api error handling         | なし             |
-| 3   | 404             | 「既に削除済み」「対象が見つからない」旨を通知し、再読込で復帰   | issue本文の境界値                  | なし             |
-| 4   | timeout/network | `EsaApiError` を showErrorMessage へ変換し、再試行は UI から明示 | .github/copilot/20-architecture.md | なし             |
+| No. | ケース                         | 方針（戻り値/表示/再試行）                                                                                                | 根拠                                  | 未確定（あれば） |
+| --- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ---------------- |
+| 1   | user cancel                    | DELETE を呼ばず終了                                                                                                       | 取り消し不能な操作の保護              | なし             |
+| 2   | 401/403                        | `EsaApiError` を message 化して表示                                                                                       | 既存 の api error handling            | なし             |
+| 3   | 404                            | 「既に削除済み」「対象が見つからない」旨を通知し、再読込で復帰                                                            | issue本文の境界値                     | なし             |
+| 4   | timeout/network                | `EsaApiError` を showErrorMessage へ変換し、再試行は UI から明示                                                          | .github/copilot/20-architecture.md    | なし             |
+| 5   | 成功（204 No Content）         | 本文なしのため JSON 解析しない（request の 204 分岐で resolve する）                                                      | 公式 API 仕様（DELETE は 204 を返す） | なし             |
+| 6   | 削除対象のエディタが開いている | 削除は実行し、エディタは閉じない。以後の保存は既存の保存処理が 404 を通知する。`esa-draft:` の未保存 Draft には影響しない | 操作設計                              | なし             |
 
 #### 5.1.3 VS Code UI部品一覧
 
-| 種別     | 部品名（設計上の候補）                      | 主責務                 | 対応機能   |
-| -------- | ------------------------------------------- | ---------------------- | ---------- |
-| View     | esaExplorer.posts Tree View                 | 記事一覧の可視化       | 記事一覧   |
-| Item     | PostTreeItem                                | 一件の記事項目         | 削除対象   |
-| Command  | esaExplorer.deletePost                      | 削除アクションの起動   | 削除       |
-| Input    | showWarningMessage / showInformationMessage | 実行前確認と結果の通知 | 削除確認   |
-| Feedback | showErrorMessage                            | 失敗通知               | API エラー |
+| 種別     | 部品名（設計上の候補）                                                 | 主責務                 | 対応機能   |
+| -------- | ---------------------------------------------------------------------- | ---------------------- | ---------- |
+| View     | esaExplorer.posts Tree View                                            | 記事一覧の可視化       | 記事一覧   |
+| Item     | PostTreeItem                                                           | 一件の記事項目         | 削除対象   |
+| Command  | esaExplorer.deletePost                                                 | 削除アクションの起動   | 削除       |
+| Input    | showWarningMessage（`{ modal: true }` で確認）/ showInformationMessage | 実行前確認と結果の通知 | 削除確認   |
+| Feedback | showErrorMessage                                                       | 失敗通知               | API エラー |
 
 #### 5.1.4 ログと観測性（漏洩防止を含む）
 
@@ -193,11 +196,11 @@
 
 ### 5.2 トレードオフ
 
-| 判断テーマ | 案A                    | 案B                          | 採用案            | 採用理由                 | 不採用理由                               |
-| ---------- | ---------------------- | ---------------------------- | ----------------- | ------------------------ | ---------------------------------------- |
-| 更新方式   | 即時 local removal     | refresh() 再読込             | refresh() 再読込  | stale cache を避けられる | 即時削除のみだと API 一覧とズレる        |
-| API 依存   | UI 層が直接 API を呼ぶ | EsaApiClient 経由            | EsaApiClient 経由 | 依存境界を守れる         | UI が HTTP 実装を持つと責務が崩れる      |
-| UI 表示    | 右クリックのみ         | 右クリック + Command Palette | 右クリックのみ    | issue の最小変更に適する | Command Palette 追加はややスコープが広い |
+| 判断テーマ | 案A                    | 案B                          | 採用案            | 採用理由                 | 不採用理由                                                                                  |
+| ---------- | ---------------------- | ---------------------------- | ----------------- | ------------------------ | ------------------------------------------------------------------------------------------- |
+| 更新方式   | 即時 local removal     | refresh() 再読込             | refresh() 再読込  | stale cache を避けられる | 即時削除のみだと API 一覧とズレる                                                           |
+| API 依存   | UI 層が直接 API を呼ぶ | EsaApiClient 経由            | EsaApiClient 経由 | 依存境界を守れる         | UI が HTTP 実装を持つと責務が崩れる                                                         |
+| UI 表示    | 右クリックのみ         | 右クリック + Command Palette | 右クリックのみ    | issue の最小変更に適する | Command Palette に出すと item なしで実行されうるため不採用（commandPalette で非表示にする） |
 
 ### 5.3 UI導線方針
 
@@ -252,10 +255,10 @@
 
 #### 5.7.0 DI 経路
 
-| No. | 開始主体                | 終了主体            | 提供する依存                                       | 受け渡し方法       | 経路文字列                                      | 境界チェック観点             | 対応シーケンス図ID |
-| --- | ----------------------- | ------------------- | -------------------------------------------------- | ------------------ | ----------------------------------------------- | ---------------------------- | ------------------ |
-| 01  | extension.ts activate() | deletePostCommand   | EsaApiClient / CredentialService / ExtensionLogger | コンストラクタ引数 | activate() -> deletePostCommand -> EsaApiClient | UI 層が直接 HTTP を持たない  | SEQ-01             |
-| 02  | extension.ts activate() | EsaPostTreeProvider | ApiClient / CredentialService                      | コンストラクタ引数 | activate() -> EsaPostTreeProvider -> Tree View  | 再描画は Provider で通知する | SEQ-01             |
+| No. | 開始主体                | 終了主体            | 提供する依存                                                                         | 受け渡し方法       | 経路文字列                                      | 境界チェック観点             | 対応シーケンス図ID |
+| --- | ----------------------- | ------------------- | ------------------------------------------------------------------------------------ | ------------------ | ----------------------------------------------- | ---------------------------- | ------------------ |
+| 01  | extension.ts activate() | deletePostCommand   | EsaApiClient / CredentialService / PostCache / EsaPostTreeProvider / ExtensionLogger | コンストラクタ引数 | activate() -> deletePostCommand -> EsaApiClient | UI 層が直接 HTTP を持たない  | SEQ-01             |
+| 02  | extension.ts activate() | EsaPostTreeProvider | ApiClient / CredentialService                                                        | コンストラクタ引数 | activate() -> EsaPostTreeProvider -> Tree View  | 再描画は Provider で通知する | SEQ-01             |
 
 #### 5.7.1 シーケンス対象一覧
 
@@ -283,6 +286,7 @@ sequenceDiagram
     Api->>EsaAPI: HTTP DELETE PARAM: /v1/teams/:team_name/posts/:post_number
     EsaAPI-->>Api: RETURN: 200 or 204
     Api-->>Cmd: RETURN: success
+    Cmd->>Provider: unregisterPost PARAM: postNumber RETURN: void
     Cmd->>Provider: refresh() RETURN: Promise<void>
     Provider-->>UI: onDidChangeTreeData.fire() RETURN: redraw
     UI-->>User: 成功メッセージ RETURN: info message
@@ -351,7 +355,7 @@ flowchart TD
     E --> F[DELETE API を呼ぶ]
     F --> G{成功か}
     G -->|NO| H[showErrorMessage を表示]
-    G -->|YES| I[refresh() を呼ぶ]
+    G -->|YES| I[cache.delete と unregisterPost で除去し、refresh() を呼ぶ]
     I --> J[RETURN: success]
 ```
 
@@ -365,7 +369,7 @@ flowchart TD
     D --> E{response.ok}
     E -->|NO| F[handleErrorResponse で EsaApiError を返す]
     E -->|YES| G[成功を返す]
-    G --> H[RETURN: void]
+    G --> H[RETURN: void（204 は本文を読まずに成功扱い）]
     F --> I[RETURN: error]
 ```
 
@@ -414,11 +418,11 @@ flowchart TD
 
 #### 6.3.1 公開関数/クラスメソッド一覧
 
-| No. | 対象（クラス名/関数名） | メソッド署名（TypeScript形式）                                                       | 配置ファイル候補                  | 備考                      |
-| --- | ----------------------- | ------------------------------------------------------------------------------------ | --------------------------------- | ------------------------- |
-| 1   | EsaApiClient            | async deletePost(teamName: string, postNumber: number, token: string): Promise<void> | src/api/EsaApiClient.ts           | DELETE API の実装         |
-| 2   | deletePostCommand       | async function execute(item: PostTreeItem): Promise<void>                            | src/commands/deletePostCommand.ts | 確認・API・refresh を統括 |
-| 3   | EsaPostTreeProvider     | refresh(): Promise<void>                                                             | src/tree/EsaPostTreeProvider.ts   | 再描画通知のトリガー      |
+| No. | 対象（クラス名/関数名） | メソッド署名（TypeScript形式）                                                                                                                                                                   | 配置ファイル候補                  | 備考                                                                                                                        |
+| --- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| 1   | EsaApiClient            | async deletePost(teamName: string, postNumber: number, token: string): Promise<void>                                                                                                             | src/api/EsaApiClient.ts           | DELETE API の実装。204 No Content は本文なしで成功扱いする                                                                  |
+| 2   | deletePostCommand       | export function registerDeletePostCommand(context, apiClient, cache, credentialService, logger, treeProvider): void（登録されるハンドラは item: PostTreeItem を受け取り、item 未指定なら no-op） | src/commands/deletePostCommand.ts | 確認・API・cache 削除・unregisterPost・refresh を統括                                                                       |
+| 3   | EsaPostTreeProvider     | refresh(): Promise<void>                                                                                                                                                                         | src/tree/EsaPostTreeProvider.ts   | 再描画通知のトリガー。`unregisterPost(postNumber: number): void` を追加し、削除成功後に `localPosts` から該当記事を除去する |
 
 ---
 
@@ -437,25 +441,25 @@ flowchart TD
 
 ### 8.1 変更予定ファイル一覧（必須）
 
-| No. | パス                                                                           | 区分（UI/Provider/ApiClient/Model/Test/Other） | 変更タイプ（追加/変更/削除） | 実装内容（具体）                           | 完了条件                       |
-| --- | ------------------------------------------------------------------------------ | ---------------------------------------------- | ---------------------------- | ------------------------------------------ | ------------------------------ |
-| 1   | src/commands/deletePostCommand.ts                                              | UI                                             | 追加                         | 削除確認ダイアログとコマンド登録           | 確認後に API を呼ぶ            |
-| 2   | src/api/EsaApiClient.ts                                                        | ApiClient                                      | 変更                         | deletePost の追加、HTTP エラー処理の再利用 | API 実行の契約に沿う           |
-| 3   | src/tree/EsaPostTreeProvider.ts                                                | Provider                                       | 変更                         | refresh で再描画・cache 更新の整合を取る   | 削除後に一覧が更新される       |
-| 4   | src/extension.ts                                                               | UI / Other                                     | 変更                         | activate() から deletePostCommand を登録   | DI 経路が固定される            |
-| 5   | package.json                                                                   | Other                                          | 変更                         | contributes.commands / menus の追加        | 右クリックメニューに削除が出る |
-| 6   | src/test/tree/EsaPostTreeProvider.test.ts or src/test/api/EsaApiClient.test.ts | Test                                           | 追加                         | 正常系/異常系/境界値テスト                 | required tests pass            |
+| No. | パス                                                                                                                                                                                  | 区分（UI/Provider/ApiClient/Model/Test/Other） | 変更タイプ（追加/変更/削除） | 実装内容（具体）                                                                                                                          | 完了条件                       |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| 1   | src/commands/deletePostCommand.ts                                                                                                                                                     | UI                                             | 追加                         | registerDeletePostCommand による削除確認ダイアログ（modal）とコマンド登録。item 未指定時は no-op                                          | 確認後に API を呼ぶ            |
+| 2   | src/api/EsaApiClient.ts                                                                                                                                                               | ApiClient                                      | 変更                         | deletePost の追加、request() に 204 No Content（本文なし）の成功分岐を追加、HTTP エラー処理の再利用                                       | API 実行の契約に沿う           |
+| 3   | src/tree/EsaPostTreeProvider.ts                                                                                                                                                       | Provider                                       | 変更                         | unregisterPost(postNumber) を追加し localPosts から除去。refresh で再描画                                                                 | 削除後に一覧が更新される       |
+| 4   | src/extension.ts                                                                                                                                                                      | UI / Other                                     | 変更                         | activate() から deletePostCommand を登録                                                                                                  | DI 経路が固定される            |
+| 5   | package.json                                                                                                                                                                          | Other                                          | 変更                         | contributes.commands / menus（view/item/context）の追加、menus.commandPalette で `esaExplorer.deletePost` を `when: false` にして非表示化 | 右クリックメニューに削除が出る |
+| 6   | src/test/api/EsaApiClient.test.ts（deletePost を追記）, src/test/commands/deletePostCommand.test.ts（新規）, src/test/tree/mergeLocalPosts.test.ts（unregisterPost 後の非復活を追記） | Test                                           | 追加                         | 正常系/異常系/境界値テスト                                                                                                                | required tests pass            |
 
 ### 8.2 実装手順（順序付き）
 
-| 手順 | 作業内容                                                                      | 対象ファイル/モジュール           | 完了条件                                                                                           |
-| ---- | ----------------------------------------------------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------- |
-| 1    | 右クリックメニューと command 定義を追加する                                   | package.json                      | `esaExplorer.deletePost` が command と menu に登録される                                           |
-| 2    | `EsaApiClient.deletePost` を実装し、既存の `handleErrorResponse` を再利用する | src/api/EsaApiClient.ts           | HTTP DELETE が `EsaApiError` で失敗時に送出される                                                  |
-| 3    | `deletePostCommand` を登録し、確認ダイアログと PAT 取得の責務を持たせる       | src/commands/deletePostCommand.ts | Cancel 時に API を呼ばない                                                                         |
-| 4    | `EsaPostTreeProvider.refresh()` とキャッシュ更新を合わせて再描画する          | src/tree/EsaPostTreeProvider.ts   | 削除後に Tree View が更新される                                                                    |
-| 5    | `src/extension.ts` で command を `activate()` に登録する                      | src/extension.ts                  | DI 経路が `activate() -> deletePostCommand` になる                                                 |
-| 6    | テスト追加と品質ゲート実行                                                    | src/test/**, npm scripts          | `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm test`, `npm run security` が成功 |
+| 手順 | 作業内容                                                                                                                  | 対象ファイル/モジュール           | 完了条件                                                                                           |
+| ---- | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | -------------------------------------------------------------------------------------------------- |
+| 1    | 右クリックメニュー、command 定義、commandPalette での非表示を追加する                                                     | package.json                      | `esaExplorer.deletePost` が command と menu に登録される                                           |
+| 2    | `EsaApiClient.deletePost` を実装し、既存の `handleErrorResponse` を再利用する                                             | src/api/EsaApiClient.ts           | HTTP 204 は本文を読まず成功し、失敗時は `EsaApiError` を送出する                                   |
+| 3    | `deletePostCommand` を登録し、確認ダイアログと PAT 取得の責務を持たせる                                                   | src/commands/deletePostCommand.ts | Cancel 時に API を呼ばない                                                                         |
+| 4    | `EsaPostTreeProvider.unregisterPost()` で localPosts を除去してから `refresh()` で再描画する（cache.delete も同時に行う） | src/tree/EsaPostTreeProvider.ts   | 削除後に Tree View が更新される                                                                    |
+| 5    | `src/extension.ts` で command を `activate()` に登録する                                                                  | src/extension.ts                  | DI 経路が `activate() -> deletePostCommand` になる                                                 |
+| 6    | テスト追加と品質ゲート実行                                                                                                | src/test/**, npm scripts          | `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm test`, `npm run security` が成功 |
 
 ### 8.3 実装禁止事項（ガードレール）
 
@@ -481,14 +485,16 @@ flowchart TD
 
 ### 9.1 テストケース
 
-| 区分（正常/例外/境界/回帰） | パターン名                            | 対象                    | シナリオ                     | 期待結果                             |
-| --------------------------- | ------------------------------------- | ----------------------- | ---------------------------- | ------------------------------------ |
-| 正常                        | delete success                        | EsaApiClient.deletePost | POST number の削除が成功     | Promise<void> が resolve する        |
-| 正常                        | delete command confirms and refreshes | deletePostCommand       | confirm OK, then delete      | `refresh()` が呼ばれる               |
-| 例外                        | cancel                                | deletePostCommand       | showWarningMessage で Cancel | `EsaApiClient.deletePost` を呼ばない |
-| 例外                        | api error 401 / 403 / 429             | EsaApiClient.deletePost | API 失敗                     | `EsaApiError` が上位へ伝播           |
-| 境界                        | already missing                       | EsaApiClient.deletePost | 404 のケース                 | エラー表示後に tree が維持される     |
-| 回帰                        | refresh after delete                  | EsaPostTreeProvider     | 削除後の再読込               | target post が出ない                 |
+| 区分（正常/例外/境界/回帰） | パターン名                            | 対象                    | シナリオ                                         | 期待結果                               |
+| --------------------------- | ------------------------------------- | ----------------------- | ------------------------------------------------ | -------------------------------------- |
+| 正常                        | delete success                        | EsaApiClient.deletePost | 記事番号の削除が成功（204 No Content、本文なし） | Promise<void> が resolve する          |
+| 正常                        | delete command confirms and refreshes | deletePostCommand       | confirm OK, then delete                          | `refresh()` が呼ばれる                 |
+| 例外                        | cancel                                | deletePostCommand       | showWarningMessage で Cancel                     | `EsaApiClient.deletePost` を呼ばない   |
+| 例外                        | api error 401 / 403 / 429             | EsaApiClient.deletePost | API 失敗                                         | `EsaApiError` が上位へ伝播             |
+| 境界                        | already missing                       | EsaApiClient.deletePost | 404 のケース                                     | エラー表示後に tree が維持される       |
+| 回帰                        | refresh after delete                  | EsaPostTreeProvider     | 削除後の再読込                                   | target post が出ない                   |
+| 回帰                        | unregister after create               | EsaPostTreeProvider     | 作成直後（TTL 内）の記事を削除して refresh       | 一覧に復活しない                       |
+| 例外                        | command without item                  | deletePostCommand       | item 未指定で実行                                | no-op（API・確認ダイアログを呼ばない） |
 
 ### 9.2 実行戦略
 
