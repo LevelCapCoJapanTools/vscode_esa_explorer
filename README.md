@@ -52,12 +52,8 @@ esa.io の記事を Visual Studio Code 上で一覧・閲覧・編集するた�
 
 Personal Access Token は VS Code の SecretStorage にのみ保存され、ログやエラーメッセージには出力されません。
 
-## 開発
-
-Codex・Claude Code・GitHub Copilot の共通 SSOT は [.github/copilot/00-index.md](.github/copilot/00-index.md) を入口とします。出力言語・レビュー方針は [AGENTS.md](AGENTS.md) を参照してください。
-
-開発手順は [docs/development.md](docs/development.md) を参照してください。アーキテクチャは [docs/architecture.md](docs/architecture.md) にまとめています。
-
 ## ライセンス
 
-[MIT](LICENSE)
+[Apache-2.0](LICENSE)
+
+アイコンに使用する esa トリアイコンは © esa LLC の素材です。コードとは異なる利用条件が適用されます。詳しくは[サードパーティー素材のクレジット](THIRD_PARTY_NOTICES.md)を参照してください。

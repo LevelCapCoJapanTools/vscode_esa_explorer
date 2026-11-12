@@ -7,3 +7,4 @@
 ## 設計計画
 
 - [エージェント共通の SSOT 入口と品質ゲートの整合](00-agent-ssot-alignment.md)
+- [esa Explorer の Visual Studio Marketplace 初回公開](00-marketplace-publication.md)

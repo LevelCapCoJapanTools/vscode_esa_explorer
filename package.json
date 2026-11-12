@@ -3,8 +3,9 @@
   "displayName": "esa Explorer",
   "description": "esa.ioの記事をVisual Studio Code上で一覧・閲覧・編集する拡張機能",
   "version": "0.1.0",
-  "publisher": "local",
-  "license": "MIT",
+  "publisher": "YoshioNishiyama",
+  "license": "Apache-2.0",
+  "icon": "media/esa-explorer-icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/LevelCapCoJapanTools/vscode_esa_explorer.git"

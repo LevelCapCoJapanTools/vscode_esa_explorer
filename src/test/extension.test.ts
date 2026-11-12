@@ -3,7 +3,7 @@ import * as vscode from "vscode";
 
 suite("Extension Integration Tests", () => {
   test("拡張機能がactivateできる", async () => {
-    const ext = vscode.extensions.getExtension("local.esa-explorer");
+    const ext = vscode.extensions.getExtension("YoshioNishiyama.esa-explorer");
     assert.ok(ext, "拡張機能が見つかりません");
     if (!ext.isActive) {
       await ext.activate();
